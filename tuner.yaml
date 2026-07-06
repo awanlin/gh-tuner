@@ -1,0 +1,58 @@
+user: awanlin
+startDate: 2026-07-07
+
+repos:
+  - name: backstage/demo
+    scope: all
+    cadence: weekly
+  - name: backstage/mkdocs-techdocs-core
+    scope: all
+    cadence: biweekly
+  - name: backstage/techdocs-container
+    scope: all
+    cadence: biweekly
+  - name: backstage/github-discord-filter
+    scope: all
+    cadence: monthly
+  - name: backstage/contribfest
+    scope: all
+    cadence: monthly
+  - name: backstage/backstage
+    scope: filtered
+    labels:
+      - area:devtools
+      - area:search
+      - area:techdocs
+      - area:home
+      - area:documentation
+      - area:microsite
+  - name: backstage/community-plugins
+    scope: filtered
+    labels:
+      - workspace/azure-devops
+      - workspace/linguist
+      - workspace/catalog
+      - workspace/cost-insights
+      - owner/area-maintainers
+
+schedule:
+  tuesday:
+    mode: issues
+    since: last-thursday
+  thursday:
+    mode: issues
+    since: last-tuesday
+  friday:
+    mode: prs
+    since: last-friday
+
+securityKeywords:
+  - security
+  - CVE
+  - GHSA
+  - vulnerability
+  - vulnerabilities
+
+filters:
+  humanEngagementOnly: true
+  excludeAwaitingOthers: true
