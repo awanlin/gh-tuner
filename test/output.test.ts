@@ -56,7 +56,7 @@ describe('generateMarkdown', () => {
     };
 
     const md = generateMarkdown(input);
-    expect(md).toContain('# Tuner — Issue Triage Summary');
+    expect(md).toContain('# GH-Tuner — Issue Triage Summary');
     expect(md).toContain('**Generated:**');
     expect(md).toContain('**Delta since:**');
     expect(md).toContain('5 (2 skipped');
@@ -82,7 +82,7 @@ describe('generateMarkdown', () => {
     };
 
     const md = generateMarkdown(input);
-    expect(md).toContain('# Tuner — PR Review Summary');
+    expect(md).toContain('# GH-Tuner — PR Review Summary');
   });
 
   it('sorts items oldest-first', () => {

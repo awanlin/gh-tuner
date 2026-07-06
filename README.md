@@ -1,8 +1,8 @@
-# Tuner
+# GH-Tuner
 
 Delta-based issue triage and PR review summaries for OSS maintainers.
 
-Tuner scans your GitHub repos, filters out noise, and generates a structured
+GH-Tuner scans your GitHub repos, filters out noise, and generates a structured
 markdown checklist of what needs your attention — aligned to your review schedule.
 
 ## Install
@@ -18,24 +18,24 @@ npm run build
 
 ```bash
 # Issue triage (auto-detects delta window on Tue/Thu)
-tuner issues
+gh-tuner issues
 
 # PR review checklist (auto-detects delta window on Fri)
-tuner prs
+gh-tuner prs
 
 # Both
-tuner all
+gh-tuner all
 
 # Override delta window
-tuner issues --since 2026-07-01
+gh-tuner issues --since 2026-07-01
 
 # Save to file without opening browser
-tuner issues --no-open --output summary.md
+gh-tuner issues --no-open --output summary.md
 ```
 
 ## Configuration
 
-Create a `tuner.yaml` in your project root:
+Create a `gh-tuner.yaml` in your project root:
 
 ```yaml
 user: your-github-username

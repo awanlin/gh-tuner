@@ -6,8 +6,8 @@ import { tmpdir } from 'node:os';
 
 describe('loadConfig', () => {
   function writeTempConfig(content: string): string {
-    const dir = mkdtempSync(join(tmpdir(), 'tuner-test-'));
-    const path = join(dir, 'tuner.yaml');
+    const dir = mkdtempSync(join(tmpdir(), 'gh-tuner-test-'));
+    const path = join(dir, 'gh-tuner.yaml');
     writeFileSync(path, content);
     return path;
   }
@@ -58,7 +58,7 @@ filters:
   });
 
   it('throws on missing config file', () => {
-    expect(() => loadConfig('/nonexistent/tuner.yaml')).toThrow();
+    expect(() => loadConfig('/nonexistent/gh-tuner.yaml')).toThrow();
   });
 
   it('throws on missing required field', () => {

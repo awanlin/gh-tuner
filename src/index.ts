@@ -38,7 +38,7 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
   }
 
   const sinceStr = sinceDate.toISOString().slice(0, 10);
-  console.log(chalk.blue(`Tuner — ${mode} mode`));
+  console.log(chalk.blue(`GH-Tuner — ${mode} mode`));
   console.log(chalk.blue(`Since: ${sinceStr}`));
 
   const includedRepos: RepoConfig[] = [];
@@ -183,7 +183,7 @@ function computeAreaStats(
 
 function addCommonOptions(cmd: Command): Command {
   return cmd
-    .option('--config <path>', 'Path to config file', './tuner.yaml')
+    .option('--config <path>', 'Path to config file', './gh-tuner.yaml')
     .option('--since <date>', 'Override delta window start (ISO date)')
     .option('--output <path>', 'Write markdown to file')
     .option('--no-open', 'Skip opening items in browser')
@@ -193,7 +193,7 @@ function addCommonOptions(cmd: Command): Command {
 const program = new Command();
 
 program
-  .name('tuner')
+  .name('gh-tuner')
   .description('Delta-based issue triage and PR review summaries for OSS maintainers')
   .version('0.1.0');
 

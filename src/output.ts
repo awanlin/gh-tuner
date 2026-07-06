@@ -88,7 +88,7 @@ export function generateMarkdown(input: SummaryInput): string {
   const itemLabel = input.mode === 'prs' ? 'PRs' : input.mode === 'all' ? 'items' : 'issues';
   const lines: string[] = [];
 
-  lines.push(`# Tuner — ${modeLabel} Summary`);
+  lines.push(`# GH-Tuner — ${modeLabel} Summary`);
   lines.push(`**Generated:** ${formatDate(input.generatedDate)}`);
   lines.push(`**Delta since:** ${formatDate(input.sinceDate)}`);
   lines.push(`**Repos scanned:** ${input.reposScanned} (${input.reposSkipped} skipped — biweekly/monthly not due)`);
