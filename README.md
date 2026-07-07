@@ -1,5 +1,8 @@
 # gh-tuner
 
+> [!NOTE]
+> This is a personal tool. Contributions are not accepted.
+
 Delta-based issue triage and PR review summaries for OSS maintainers.
 
 gh-tuner scans your GitHub repos, filters out noise, and generates a structured
