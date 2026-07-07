@@ -89,7 +89,7 @@ export function generateMarkdown(input: SummaryInput): string {
   const itemLabel = input.mode === 'prs' ? 'PRs' : input.mode === 'all' ? 'items' : 'issues';
   const lines: string[] = [];
 
-  lines.push(`# GH-Tuner — ${modeLabel} Summary`);
+  lines.push(`# gh-tuner — ${modeLabel} Summary`);
   lines.push(`**Generated:** ${formatDate(input.generatedDate)}`);
   lines.push(`**Delta since:** ${formatDate(input.sinceDate)}`);
   lines.push(

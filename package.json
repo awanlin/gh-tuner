@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/awanlin/tuner.git"
+    "url": "git+https://github.com/awanlin/gh-tuner.git"
   },
   "keywords": [],
   "author": "",
@@ -24,9 +24,9 @@
     "node": "22 || 24"
   },
   "bugs": {
-    "url": "https://github.com/awanlin/tuner/issues"
+    "url": "https://github.com/awanlin/gh-tuner/issues"
   },
-  "homepage": "https://github.com/awanlin/tuner#readme",
+  "homepage": "https://github.com/awanlin/gh-tuner#readme",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.0.1",

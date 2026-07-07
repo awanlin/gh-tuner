@@ -40,7 +40,7 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
   }
 
   const sinceStr = sinceDate.toISOString().slice(0, 10);
-  console.log(chalk.blue(`GH-Tuner — ${mode} mode`));
+  console.log(chalk.blue(`gh-tuner — ${mode} mode`));
   console.log(chalk.blue(`Since: ${sinceStr}`));
 
   const includedRepos: RepoConfig[] = [];

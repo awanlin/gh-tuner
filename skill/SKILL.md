@@ -6,7 +6,7 @@ description: >
   Invoke with `/gh-tuner`, `/gh-tuner issues`, `/gh-tuner prs`, or `/gh-tuner --no-open`.
 ---
 
-# GH-Tuner
+# gh-tuner
 
 You are running the gh-tuner CLI to generate an OSS triage/review summary.
 
