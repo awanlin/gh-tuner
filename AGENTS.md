@@ -18,10 +18,12 @@ Run this to bump:
 
 ```bash
 npm version patch|minor|major --no-git-tag-version
+npm pkg fix
 yarn install
 ```
 
-The `yarn install` is required to update the lockfile after the version change — CI will fail with `--immutable` if the lockfile is out of sync.
+- `npm pkg fix` is required because `npm version` collapses the `bin` field to a string, which npm publish rejects. `npm pkg fix` restores the correct object form.
+- `yarn install` is required to update the lockfile — CI will fail with `--immutable` if the lockfile is out of sync.
 
 Do not create git tags — the CD pipeline handles publishing.
 

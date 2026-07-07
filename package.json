@@ -1,9 +1,9 @@
 {
   "name": "gh-tuner",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Delta-based issue triage and PR review summaries for OSS maintainers",
   "type": "module",
-  "bin": "./bin/cli",
+  "bin": "bin/cli",
   "files": [
     "dist",
     "bin"

@@ -29,4 +29,6 @@ jobs:
         run: yarn tsc
 
       - name: Publish
-        run: npm publish --provenance --access public
+        run: |
+          npm pkg fix
+          npm publish --provenance --access public
