@@ -23,6 +23,7 @@
   "engines": {
     "node": "22 || 24"
   },
+  "packageManager": "yarn@4.4.1",
   "bugs": {
     "url": "https://github.com/awanlin/gh-tuner/issues"
   },

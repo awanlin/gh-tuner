@@ -90,7 +90,6 @@ A GitHub Actions workflow (`.github/workflows/CI.yml`) runs on every pull reques
 
 MIT
 
-
 ## Hi there 👋
 
 I'm André Wanlin a Customer Success Engineer [@spotify](https://github.com/spotify) working on [@backstage](https://github.com/backstage/backstage) based in Winnipeg, Manitoba, Canada 🇨🇦
@@ -124,7 +123,7 @@ Here's my current open source work and responsibilities:
 
 ### Backstage Discord
 
-As I mentioned above I'm often on the Backstage Discord Sever helping answer questions. 
+As I mentioned above I'm often on the Backstage Discord Sever helping answer questions.
 
 - **Office hours:** 6:30-7:30 CST Tuesdays and Thursdays
 - **Dedicated PR/Issue Reviews:** 12:00-15:00 CST on Fridays
