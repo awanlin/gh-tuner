@@ -14,36 +14,36 @@ Run directly with npx (no install needed):
 
 ```bash
 # Issue triage (auto-detects delta window based on your schedule)
-npx gh-tuner issues
+npx gh-tuner@latest issues
 
 # PR review checklist
-npx gh-tuner prs
+npx gh-tuner@latest prs
 
 # Both issues and PRs
-npx gh-tuner all
+npx gh-tuner@latest all
 ```
 
 ### Options
 
 ```bash
 # Override the delta window start date
-npx gh-tuner issues --since 2026-07-01
+npx gh-tuner@latest issues --since 2026-07-01
 
 # Save output to a file instead of stdout
-npx gh-tuner issues --output summary.md
+npx gh-tuner@latest issues --output summary.md
 
 # Skip opening items in the browser
-npx gh-tuner issues --no-open
+npx gh-tuner@latest issues --no-open
 
 # Force open all items even if there are more than 50
-npx gh-tuner issues --open-all
+npx gh-tuner@latest issues --open-all
 
 # Use a custom config file
-npx gh-tuner issues --config ./my-config.yaml
+npx gh-tuner@latest issues --config ./my-config.yaml
 
 # Show help
-npx gh-tuner --help
-npx gh-tuner issues --help
+npx gh-tuner@latest --help
+npx gh-tuner@latest issues --help
 ```
 
 ## Install from source
