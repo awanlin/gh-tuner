@@ -1,6 +1,11 @@
 import { Command } from 'commander';
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
 import chalk from 'chalk';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const pkg = JSON.parse(readFileSync(resolve(__dirname, '..', 'package.json'), 'utf-8'));
 import { loadConfig } from './config.js';
 import { getScheduleForDay, resolveSince, isRepoIncluded } from './schedule.js';
 import { fetchIssues, fetchPrs, fetchComments, type GitHubItem } from './github.js';
@@ -198,7 +203,7 @@ const program = new Command();
 program
   .name('gh-tuner')
   .description('Delta-based issue triage and PR review summaries for OSS maintainers')
-  .version('0.1.0');
+  .version(pkg.version);
 
 addCommonOptions(program.command('issues').description('Generate issue triage summary')).action(
   async (opts) => run('issues', opts),
