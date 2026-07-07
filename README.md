@@ -8,32 +8,51 @@ Delta-based issue triage and PR review summaries for OSS maintainers.
 gh-tuner scans your GitHub repos, filters out noise, and generates a structured
 markdown checklist of what needs your attention — aligned to your review schedule.
 
-## Install
+## Quick start
+
+Run directly with npx (no install needed):
+
+```bash
+# Issue triage (auto-detects delta window based on your schedule)
+npx gh-tuner issues
+
+# PR review checklist
+npx gh-tuner prs
+
+# Both issues and PRs
+npx gh-tuner all
+```
+
+### Options
+
+```bash
+# Override the delta window start date
+npx gh-tuner issues --since 2026-07-01
+
+# Save output to a file instead of stdout
+npx gh-tuner issues --output summary.md
+
+# Skip opening items in the browser
+npx gh-tuner issues --no-open
+
+# Force open all items even if there are more than 50
+npx gh-tuner issues --open-all
+
+# Use a custom config file
+npx gh-tuner issues --config ./my-config.yaml
+
+# Show help
+npx gh-tuner --help
+npx gh-tuner issues --help
+```
+
+## Install from source
 
 ```bash
 git clone git@github.com:awanlin/gh-tuner.git
 cd gh-tuner
 yarn install
-yarn build
-```
-
-## Usage
-
-```bash
-# Issue triage (auto-detects delta window on Tue/Thu)
-gh-tuner issues
-
-# PR review checklist (auto-detects delta window on Fri)
-gh-tuner prs
-
-# Both
-gh-tuner all
-
-# Override delta window
-gh-tuner issues --since 2026-07-01
-
-# Save to file without opening browser
-gh-tuner issues --no-open --output summary.md
+yarn tsc
 ```
 
 ## Configuration
@@ -82,12 +101,13 @@ filters:
 
 ## CI
 
-A GitHub Actions workflow (`.github/workflows/CI.yml`) runs on every pull request to `main`. It tests against Node 22 and 24 and runs:
+A GitHub Actions workflow (`.github/workflows/CI.yml`) runs on every pull request:
 
-1. **Type check** — `yarn build`
-2. **Lint** — `yarn lint` (ESLint with typescript-eslint)
-3. **Format check** — `yarn format:check` (Prettier)
-4. **Tests** — `yarn test` (Vitest)
+1. **Version check** — verifies `package.json` version was bumped
+2. **Type check** — `yarn tsc:full`
+3. **Lint** — `yarn lint` (ESLint with typescript-eslint)
+4. **Format check** — `yarn format:check` (Prettier)
+5. **Tests** — `yarn test` (Vitest)
 
 ## License
 
