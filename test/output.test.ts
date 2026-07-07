@@ -47,7 +47,13 @@ describe('generateMarkdown', () => {
       sinceDate: new Date('2026-07-03'),
       reposScanned: 5,
       reposSkipped: 2,
-      newItems: [makeItem({ number: 10, title: 'New bug', url: 'https://github.com/backstage/backstage/issues/10' })],
+      newItems: [
+        makeItem({
+          number: 10,
+          title: 'New bug',
+          url: 'https://github.com/backstage/backstage/issues/10',
+        }),
+      ],
       updatedItems: [],
       security: [],
       excludedAwaiting: 3,
@@ -86,8 +92,16 @@ describe('generateMarkdown', () => {
   });
 
   it('sorts items oldest-first', () => {
-    const older = makeItem({ number: 1, createdAt: '2026-06-01T00:00:00Z', url: 'https://github.com/org/repo/issues/1' });
-    const newer = makeItem({ number: 2, createdAt: '2026-07-07T00:00:00Z', url: 'https://github.com/org/repo/issues/2' });
+    const older = makeItem({
+      number: 1,
+      createdAt: '2026-06-01T00:00:00Z',
+      url: 'https://github.com/org/repo/issues/1',
+    });
+    const newer = makeItem({
+      number: 2,
+      createdAt: '2026-07-07T00:00:00Z',
+      url: 'https://github.com/org/repo/issues/2',
+    });
 
     const input: SummaryInput = {
       mode: 'issues',

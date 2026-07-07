@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { loadConfig } from '../src/config.js';
-import { writeFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { writeFileSync, mkdtempSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 

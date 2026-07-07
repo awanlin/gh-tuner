@@ -29,9 +29,11 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
   } else {
     const entry = getScheduleForDay(cfg.schedule, today);
     if (!entry) {
-      console.error(chalk.red(
-        `No schedule entry for ${today.toLocaleDateString('en-US', { weekday: 'long' })}. Use --since to specify a date.`,
-      ));
+      console.error(
+        chalk.red(
+          `No schedule entry for ${today.toLocaleDateString('en-US', { weekday: 'long' })}. Use --since to specify a date.`,
+        ),
+      );
       process.exit(1);
     }
     sinceDate = resolveSince(entry.since, today);
@@ -73,10 +75,11 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
     }
 
     if (repo.scope === 'filtered' && repo.labels) {
-      items = items.filter(item =>
-        item.labels.some(l => repo.labels!.includes(l)) ||
-        item.author === cfg.user ||
-        item.labels.includes(`involves:${cfg.user}`),
+      items = items.filter(
+        (item) =>
+          item.labels.some((l) => repo.labels!.includes(l)) ||
+          item.author === cfg.user ||
+          item.labels.includes(`involves:${cfg.user}`),
       );
     }
 
@@ -84,8 +87,8 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
       item.comments = fetchComments(repo.name, item.number);
     }
 
-    const newItems = items.filter(i => new Date(i.createdAt) > sinceDate);
-    const updatedItems = items.filter(i => new Date(i.createdAt) <= sinceDate);
+    const newItems = items.filter((i) => new Date(i.createdAt) > sinceDate);
+    const updatedItems = items.filter((i) => new Date(i.createdAt) <= sinceDate);
 
     for (const item of newItems) {
       if (hasSecurityKeyword(item, cfg.securityKeywords)) {
@@ -135,7 +138,7 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
 
   if (opts.open) {
     const allItems = [...allSecurity, ...allNewItems, ...allUpdatedItems];
-    const unique = [...new Map(allItems.map(i => [i.url, i])).values()];
+    const unique = [...new Map(allItems.map((i) => [i.url, i])).values()];
     await openItems(unique, { openAll: opts.openAll });
   }
 }
@@ -161,11 +164,11 @@ function computeAreaStats(
   const stats: AreaStat[] = [];
 
   for (const area of allLabels) {
-    const areaItems = allItems.filter(i => i.labels.includes(area));
+    const areaItems = allItems.filter((i) => i.labels.includes(area));
     if (areaItems.length === 0) continue;
 
-    const issues = areaItems.filter(i => !i.isPr);
-    const prs = areaItems.filter(i => i.isPr);
+    const issues = areaItems.filter((i) => !i.isPr);
+    const prs = areaItems.filter((i) => i.isPr);
     const oldest = areaItems.reduce((prev, curr) =>
       new Date(prev.createdAt) < new Date(curr.createdAt) ? prev : curr,
     );
@@ -197,13 +200,16 @@ program
   .description('Delta-based issue triage and PR review summaries for OSS maintainers')
   .version('0.1.0');
 
-addCommonOptions(program.command('issues').description('Generate issue triage summary'))
-  .action(async (opts) => run('issues', opts));
+addCommonOptions(program.command('issues').description('Generate issue triage summary')).action(
+  async (opts) => run('issues', opts),
+);
 
-addCommonOptions(program.command('prs').description('Generate PR review checklist'))
-  .action(async (opts) => run('prs', opts));
+addCommonOptions(program.command('prs').description('Generate PR review checklist')).action(
+  async (opts) => run('prs', opts),
+);
 
-addCommonOptions(program.command('all').description('Generate both issue and PR summaries'))
-  .action(async (opts) => run('all', opts));
+addCommonOptions(program.command('all').description('Generate both issue and PR summaries')).action(
+  async (opts) => run('all', opts),
+);
 
 program.parse();

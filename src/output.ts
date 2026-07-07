@@ -57,7 +57,7 @@ function groupByRepo(items: GitHubItem[]): Map<string, GitHubItem[]> {
 
 function formatItem(item: GitHubItem, now: Date): string {
   const age = formatAge(item.createdAt, now);
-  const labels = item.labels.length > 0 ? ` ${item.labels.map(l => `\`${l}\``).join(' ')}` : '';
+  const labels = item.labels.length > 0 ? ` ${item.labels.map((l) => `\`${l}\``).join(' ')}` : '';
   const commentCount = item.comments.length;
   const extras: string[] = [age];
   if (commentCount > 0) {
@@ -84,14 +84,17 @@ function renderSection(title: string, items: GitHubItem[], now: Date): string {
 }
 
 export function generateMarkdown(input: SummaryInput): string {
-  const modeLabel = input.mode === 'prs' ? 'PR Review' : input.mode === 'all' ? 'Full' : 'Issue Triage';
+  const modeLabel =
+    input.mode === 'prs' ? 'PR Review' : input.mode === 'all' ? 'Full' : 'Issue Triage';
   const itemLabel = input.mode === 'prs' ? 'PRs' : input.mode === 'all' ? 'items' : 'issues';
   const lines: string[] = [];
 
   lines.push(`# GH-Tuner — ${modeLabel} Summary`);
   lines.push(`**Generated:** ${formatDate(input.generatedDate)}`);
   lines.push(`**Delta since:** ${formatDate(input.sinceDate)}`);
-  lines.push(`**Repos scanned:** ${input.reposScanned} (${input.reposSkipped} skipped — biweekly/monthly not due)`);
+  lines.push(
+    `**Repos scanned:** ${input.reposScanned} (${input.reposSkipped} skipped — biweekly/monthly not due)`,
+  );
   lines.push('');
 
   if (input.security.length > 0) {
@@ -102,20 +105,24 @@ export function generateMarkdown(input: SummaryInput): string {
     lines.push('');
   }
 
-  const newLabel = input.mode === 'prs' ? 'New PRs' : input.mode === 'all' ? 'New Items' : 'New Issues';
+  const newLabel =
+    input.mode === 'prs' ? 'New PRs' : input.mode === 'all' ? 'New Items' : 'New Issues';
   const newSection = renderSection(newLabel, input.newItems, input.generatedDate);
   if (newSection) lines.push(newSection);
 
-  const updatedLabel = input.mode === 'prs'
-    ? 'Updated PRs — Human Engagement'
-    : input.mode === 'all'
-      ? 'Updated Items — Human Engagement'
-      : 'Updated Issues — Human Engagement';
+  const updatedLabel =
+    input.mode === 'prs'
+      ? 'Updated PRs — Human Engagement'
+      : input.mode === 'all'
+        ? 'Updated Items — Human Engagement'
+        : 'Updated Issues — Human Engagement';
   const updatedSection = renderSection(updatedLabel, input.updatedItems, input.generatedDate);
   if (updatedSection) lines.push(updatedSection);
 
   lines.push('---');
-  lines.push(`*${input.excludedAwaiting} ${itemLabel} excluded (awaiting others) · ${input.excludedSystem} system-only updates filtered*`);
+  lines.push(
+    `*${input.excludedAwaiting} ${itemLabel} excluded (awaiting others) · ${input.excludedSystem} system-only updates filtered*`,
+  );
   lines.push('');
 
   if (input.areaStats.length > 0) {

@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { isBot, hasHumanEngagement, isAwaitingOthers, hasSecurityKeyword, applyFilters } from '../src/filters.js';
+import {
+  isBot,
+  hasHumanEngagement,
+  isAwaitingOthers,
+  hasSecurityKeyword,
+  applyFilters,
+} from '../src/filters.js';
 import type { GitHubItem } from '../src/github.js';
 
 function makeItem(overrides: Partial<GitHubItem> = {}): GitHubItem {
@@ -39,9 +45,7 @@ describe('isBot', () => {
 describe('hasHumanEngagement', () => {
   it('returns true when a human commented after since', () => {
     const item = makeItem({
-      comments: [
-        { author: 'humanuser', createdAt: '2026-07-04T10:00:00Z', body: 'Looks good' },
-      ],
+      comments: [{ author: 'humanuser', createdAt: '2026-07-04T10:00:00Z', body: 'Looks good' }],
     });
     expect(hasHumanEngagement(item, '2026-07-03')).toBe(true);
   });
@@ -57,9 +61,7 @@ describe('hasHumanEngagement', () => {
 
   it('returns false when human comments are before since', () => {
     const item = makeItem({
-      comments: [
-        { author: 'humanuser', createdAt: '2026-07-01T10:00:00Z', body: 'Old comment' },
-      ],
+      comments: [{ author: 'humanuser', createdAt: '2026-07-01T10:00:00Z', body: 'Old comment' }],
     });
     expect(hasHumanEngagement(item, '2026-07-03')).toBe(false);
   });

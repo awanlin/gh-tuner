@@ -50,8 +50,8 @@ export function loadConfig(configPath: string): TunerConfig {
   return {
     user: parsed.user,
     startDate: parsed.startDate,
-    repos: parsed.repos.map((r: any) => {
-      const repo: RepoConfig = { name: r.name, scope: r.scope };
+    repos: parsed.repos.map((r: Partial<RepoConfig>) => {
+      const repo: RepoConfig = { name: r.name!, scope: r.scope! };
       if (r.cadence) repo.cadence = r.cadence;
       if (r.labels) repo.labels = r.labels;
       return repo;

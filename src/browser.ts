@@ -14,7 +14,7 @@ const CAP_LIMIT = 25;
 const BATCH_DELAY_MS = 1500;
 
 function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export async function openItems(
@@ -31,22 +31,22 @@ export async function openItems(
   let capped = false;
 
   if (!opts.openAll && total > CAP_THRESHOLD) {
-    console.log(chalk.yellow(
-      `Found ${total} items — opening the first ${CAP_LIMIT} (security + newest). Use --open-all to override.`,
-    ));
+    console.log(
+      chalk.yellow(
+        `Found ${total} items — opening the first ${CAP_LIMIT} (security + newest). Use --open-all to override.`,
+      ),
+    );
     toOpen = items.slice(0, CAP_LIMIT);
     capped = true;
   } else if (total > AUTO_OPEN_THRESHOLD) {
-    console.log(chalk.blue(
-      `Found ${total} items — opening all in batches of ${BATCH_SIZE}.`,
-    ));
+    console.log(chalk.blue(`Found ${total} items — opening all in batches of ${BATCH_SIZE}.`));
   }
 
   if (!opts.dryRun) {
     const openModule = await import('open');
     for (let i = 0; i < toOpen.length; i += BATCH_SIZE) {
       const batch = toOpen.slice(i, i + BATCH_SIZE);
-      await Promise.all(batch.map(item => openModule.default(item.url)));
+      await Promise.all(batch.map((item) => openModule.default(item.url)));
       if (i + BATCH_SIZE < toOpen.length) {
         await sleep(BATCH_DELAY_MS);
       }

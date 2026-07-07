@@ -14,21 +14,19 @@ export function isBot(author: string): boolean {
 
 export function hasHumanEngagement(item: GitHubItem, since: string): boolean {
   const sinceDate = new Date(since);
-  return item.comments.some(
-    c => !isBot(c.author) && new Date(c.createdAt) > sinceDate,
-  );
+  return item.comments.some((c) => !isBot(c.author) && new Date(c.createdAt) > sinceDate);
 }
 
 export function isAwaitingOthers(item: GitHubItem, user: string): boolean {
-  const humanComments = item.comments.filter(c => !isBot(c.author));
+  const humanComments = item.comments.filter((c) => !isBot(c.author));
   if (humanComments.length === 0) return false;
   const last = humanComments[humanComments.length - 1];
   return last.author === user;
 }
 
 export function hasSecurityKeyword(item: GitHubItem, keywords: string[]): boolean {
-  const text = `${item.title} ${item.comments.map(c => c.body).join(' ')}`.toLowerCase();
-  return keywords.some(kw => text.includes(kw.toLowerCase()));
+  const text = `${item.title} ${item.comments.map((c) => c.body).join(' ')}`.toLowerCase();
+  return keywords.some((kw) => text.includes(kw.toLowerCase()));
 }
 
 export interface FilterResult {

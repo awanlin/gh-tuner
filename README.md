@@ -10,8 +10,8 @@ markdown checklist of what needs your attention — aligned to your review sched
 ```bash
 git clone git@github.com:awanlin/tuner.git
 cd tuner
-npm install
-npm run build
+yarn install
+yarn build
 ```
 
 ## Usage
@@ -43,10 +43,10 @@ startDate: 2026-07-07
 
 repos:
   - name: org/repo
-    scope: all        # fetch all issues/PRs
-    cadence: weekly   # weekly | biweekly | monthly
+    scope: all # fetch all issues/PRs
+    cadence: weekly # weekly | biweekly | monthly
   - name: org/other-repo
-    scope: filtered   # only items involving you + label matches
+    scope: filtered # only items involving you + label matches
     labels:
       - area:search
       - area:docs
@@ -68,14 +68,23 @@ securityKeywords:
   - GHSA
 
 filters:
-  humanEngagementOnly: true    # only surface human comments, not system activity
-  excludeAwaitingOthers: true  # skip items where you're the last commenter
+  humanEngagementOnly: true # only surface human comments, not system activity
+  excludeAwaitingOthers: true # skip items where you're the last commenter
 ```
 
 ## Requirements
 
-- Node.js 20+
+- Node.js 22 or 24 (LTS versions only — pinned via `.nvmrc` to 24)
 - [GitHub CLI](https://cli.github.com/) (`gh`) authenticated
+
+## CI
+
+A GitHub Actions workflow (`.github/workflows/CI.yml`) runs on every pull request to `main`. It tests against Node 22 and 24 and runs:
+
+1. **Type check** — `yarn build`
+2. **Lint** — `yarn lint` (ESLint with typescript-eslint)
+3. **Format check** — `yarn format:check` (Prettier)
+4. **Tests** — `yarn test` (Vitest)
 
 ## License
 

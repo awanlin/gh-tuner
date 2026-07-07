@@ -3,11 +3,13 @@
   "version": "0.1.0",
   "description": "Delta-based issue triage and PR review summaries for OSS maintainers",
   "type": "module",
-  "bin": {
-    "gh-tuner": "./bin/gh-tuner.js"
-  },
+  "bin": "./bin/gh-tuner.js",
   "scripts": {
-    "build": "tsc",
+    "tsc": "tsc",
+    "tsc:full": "tsc --skipLibCheck false --incremental false",
+    "lint": "eslint .",
+    "format:check": "prettier --check .",
+    "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -18,13 +20,21 @@
   "keywords": [],
   "author": "",
   "license": "MIT",
+  "engines": {
+    "node": "22 || 24"
+  },
   "bugs": {
     "url": "https://github.com/awanlin/tuner/issues"
   },
   "homepage": "https://github.com/awanlin/tuner#readme",
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^26.0.1",
+    "eslint": "^10.6.0",
+    "prettier": "^3.9.3",
     "typescript": "^6.0.3",
+    "typescript-eslint": "^8.62.1",
+    "vite": "^7.3.6",
     "vitest": "^5.0.0-beta.5"
   },
   "dependencies": {
