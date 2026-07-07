@@ -3,9 +3,7 @@
   "version": "0.1.7",
   "description": "Delta-based issue triage and PR review summaries for OSS maintainers",
   "type": "module",
-  "bin": {
-    "gh-tuner": "./bin/gh-tuner"
-  },
+  "bin": "./bin/gh-tuner",
   "files": [
     "dist",
     "bin"
