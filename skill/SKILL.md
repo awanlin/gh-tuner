@@ -22,7 +22,7 @@ You are running the gh-tuner CLI to generate an OSS triage/review summary.
 
 ```bash
 cd <path-to-gh-tuner-repo>
-node bin/gh-tuner.js <mode> --no-open --output /tmp/gh-tuner-summary.md --config ./gh-tuner.yaml
+node bin/gh-tuner <mode> --no-open --output /tmp/gh-tuner-summary.md --config ./gh-tuner.yaml
 ```
 
 If the user passed `--no-open`, do not open any browser tabs.
@@ -41,5 +41,5 @@ If the user passed `--no-open`, do not open any browser tabs.
 Print the full enhanced markdown summary. If `--no-open` was NOT passed, ask whether to open the items in the browser. If yes, run:
 
 ```bash
-node bin/gh-tuner.js <mode> --config ./gh-tuner.yaml --open
+node bin/gh-tuner <mode> --config ./gh-tuner.yaml --open
 ```
