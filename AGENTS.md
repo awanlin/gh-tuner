@@ -18,7 +18,10 @@ Run this to bump:
 
 ```bash
 npm version patch|minor|major --no-git-tag-version
+yarn install
 ```
+
+The `yarn install` is required to update the lockfile after the version change — CI will fail with `--immutable` if the lockfile is out of sync.
 
 Do not create git tags — the CD pipeline handles publishing.
 
