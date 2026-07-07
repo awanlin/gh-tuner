@@ -4,6 +4,7 @@
   "description": "Delta-based issue triage and PR review summaries for OSS maintainers",
   "type": "module",
   "bin": "./bin/gh-tuner.js",
+  "files": ["dist", "bin"],
   "scripts": {
     "tsc": "tsc",
     "tsc:full": "tsc --skipLibCheck false --incremental false",
