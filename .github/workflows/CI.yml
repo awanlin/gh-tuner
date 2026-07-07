@@ -2,8 +2,24 @@ name: CI
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
 
 jobs:
+  version-label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for version label
+        run: |
+          labels='${{ toJson(github.event.pull_request.labels.*.name) }}'
+          for bump in patch minor major; do
+            if echo "$labels" | grep -q "\"$bump\""; then
+              echo "Found version label: $bump"
+              exit 0
+            fi
+          done
+          echo "::error::PR must have a 'patch', 'minor', or 'major' label"
+          exit 1
+
   ci:
     runs-on: ubuntu-latest
 

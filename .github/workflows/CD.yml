@@ -9,11 +9,13 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: read
+      contents: write
       id-token: write
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - run: corepack enable
 
@@ -31,10 +33,47 @@ jobs:
       - name: Test
         run: yarn test
 
+      - name: Determine version bump
+        id: bump
+        run: |
+          pr_number=$(gh pr list --state merged --base main --limit 1 --json number --jq '.[0].number')
+          if [ -z "$pr_number" ]; then
+            echo "No merged PR found, skipping publish"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          labels=$(gh pr view "$pr_number" --json labels --jq '.labels[].name')
+          for bump in major minor patch; do
+            if echo "$labels" | grep -q "^${bump}$"; then
+              echo "bump=$bump" >> "$GITHUB_OUTPUT"
+              echo "skip=false" >> "$GITHUB_OUTPUT"
+              echo "Version bump: $bump (from PR #$pr_number)"
+              exit 0
+            fi
+          done
+          echo "No version label found on PR #$pr_number, skipping publish"
+          echo "skip=true" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bump version
+        if: steps.bump.outputs.skip != 'true'
+        run: |
+          npm version ${{ steps.bump.outputs.bump }} --no-git-tag-version
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          version=$(node -p "require('./package.json').version")
+          git add package.json
+          git commit -m "release: v${version}"
+          git tag "v${version}"
+          git push --follow-tags
+
       - name: Build
+        if: steps.bump.outputs.skip != 'true'
         run: yarn tsc
 
       - name: Publish
+        if: steps.bump.outputs.skip != 'true'
         run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
