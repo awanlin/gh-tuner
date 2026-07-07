@@ -2,23 +2,24 @@ name: CI
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, labeled]
 
 jobs:
-  version-label:
+  version-check:
     runs-on: ubuntu-latest
     steps:
-      - name: Check for version label
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Check version was bumped
         run: |
-          labels='${{ toJson(github.event.pull_request.labels.*.name) }}'
-          for bump in patch minor major; do
-            if echo "$labels" | grep -q "\"$bump\""; then
-              echo "Found version label: $bump"
-              exit 0
-            fi
-          done
-          echo "::error::PR must have a 'patch', 'minor', or 'major' label"
-          exit 1
+          pr_version=$(node -p "require('./package.json').version")
+          main_version=$(git show origin/main:package.json | node -p "JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).version")
+          if [ "$pr_version" = "$main_version" ]; then
+            echo "::error::Version in package.json ($pr_version) has not been bumped. Update it with: npm version patch|minor|major --no-git-tag-version"
+            exit 1
+          fi
+          echo "Version bumped: $main_version -> $pr_version"
 
   ci:
     runs-on: ubuntu-latest
