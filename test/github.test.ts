@@ -256,7 +256,6 @@ describe('fetchPrs', () => {
         author: { login: 'contributor' },
         state: 'OPEN',
         reviewDecision: 'APPROVED',
-        statusCheckRollup: [],
       },
     ]);
     mockExecFileSync.mockReturnValue(ghOutput);

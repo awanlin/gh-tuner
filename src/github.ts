@@ -74,8 +74,11 @@ export function ghExec(args: string[]): string {
 }
 
 const ISSUE_FIELDS = 'number,title,url,createdAt,updatedAt,labels,author,state';
-const PR_FIELDS =
-  'number,title,url,createdAt,updatedAt,labels,author,state,reviewDecision,statusCheckRollup';
+// TODO: Consider adding statusCheckRollup back to show CI pass/fail status
+// per PR. Dropped because it causes 504 timeouts on large repos (the field
+// triggers expensive cross-service lookups in GitHub's GraphQL API) and the
+// data wasn't being surfaced in the output.
+const PR_FIELDS = 'number,title,url,createdAt,updatedAt,labels,author,state,reviewDecision';
 
 interface GhLabel {
   name: string;
