@@ -109,11 +109,7 @@ export function fetchPrs(repo: string, since: string): GitHubItem[] {
 }
 
 export function fetchComments(repo: string, number: number): GitHubComment[] {
-  const raw = ghExec([
-    'api',
-    `repos/${repo}/issues/${number}/comments`,
-    '--paginate',
-  ]);
+  const raw = ghExec(['api', `repos/${repo}/issues/${number}/comments`, '--paginate']);
 
   if (!raw) return [];
 
