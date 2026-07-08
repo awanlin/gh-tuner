@@ -8,9 +8,15 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(resolve(__dirname, '..', 'package.json'), 'utf-8'));
 import { loadConfig } from './config.js';
 import { getScheduleForDay, resolveSince, isRepoIncluded } from './schedule.js';
-import { fetchIssues, fetchPrs, fetchComments, type GitHubItem } from './github.js';
+import { fetchIssues, fetchPrs, fetchComments, lastExecFailed, type GitHubItem } from './github.js';
 import { applyFilters, hasSecurityKeyword } from './filters.js';
-import { generateMarkdown, formatAge, type SummaryInput, type AreaStat } from './output.js';
+import {
+  generateMarkdown,
+  formatAge,
+  type SummaryInput,
+  type AreaStat,
+  type FailedRepo,
+} from './output.js';
 import { openItems } from './browser.js';
 import type { TunerConfig, RepoConfig } from './config.js';
 
@@ -64,6 +70,7 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
   const allNewItems: GitHubItem[] = [];
   const allUpdatedItems: GitHubItem[] = [];
   const allSecurity: GitHubItem[] = [];
+  const failedRepos: FailedRepo[] = [];
   let totalExcludedAwaiting = 0;
   let totalExcludedSystem = 0;
 
@@ -74,9 +81,15 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
 
     if (mode === 'issues' || mode === 'all') {
       items.push(...fetchIssues(repo.name, sinceStr));
+      if (lastExecFailed()) {
+        failedRepos.push({ name: repo.name, mode: 'issues' });
+      }
     }
     if (mode === 'prs' || mode === 'all') {
       items.push(...fetchPrs(repo.name, sinceStr));
+      if (lastExecFailed()) {
+        failedRepos.push({ name: repo.name, mode: 'PRs' });
+      }
     }
 
     if (repo.scope === 'filtered' && repo.labels) {
@@ -130,6 +143,7 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
     excludedAwaiting: totalExcludedAwaiting,
     excludedSystem: totalExcludedSystem,
     areaStats,
+    failedRepos,
   };
 
   const markdown = generateMarkdown(summaryInput);

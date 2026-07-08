@@ -7,6 +7,11 @@ export interface AreaStat {
   oldest: string;
 }
 
+export interface FailedRepo {
+  name: string;
+  mode: string;
+}
+
 export interface SummaryInput {
   mode: 'issues' | 'prs' | 'all';
   generatedDate: Date;
@@ -19,6 +24,7 @@ export interface SummaryInput {
   excludedAwaiting: number;
   excludedSystem: number;
   areaStats: AreaStat[];
+  failedRepos: FailedRepo[];
 }
 
 const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -123,6 +129,13 @@ export function generateMarkdown(input: SummaryInput): string {
   lines.push(
     `*${input.excludedAwaiting} ${itemLabel} excluded (awaiting others) · ${input.excludedSystem} system-only updates filtered*`,
   );
+
+  if (input.failedRepos.length > 0) {
+    const failures = input.failedRepos.map((r) => `${r.name} (${r.mode})`).join(', ');
+    lines.push('');
+    lines.push(`> **⚠ Failed to fetch:** ${failures}`);
+  }
+
   lines.push('');
 
   if (input.areaStats.length > 0) {

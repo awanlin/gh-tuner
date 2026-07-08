@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as child_process from 'node:child_process';
-import { ghExec, fetchIssues, fetchPrs, fetchComments } from '../src/github.js';
+import { ghExec, fetchIssues, fetchPrs, fetchComments, lastExecFailed } from '../src/github.js';
 
 vi.mock('node:child_process', () => ({
   execFileSync: vi.fn(),
@@ -30,25 +30,68 @@ describe('ghExec', () => {
     expect(ghExec(['version'])).toBe('result');
   });
 
-  it('returns empty string and logs warning when gh command fails', () => {
+  it('retries on failure and succeeds on later attempt', () => {
     const error = new Error('Command failed') as Error & { stderr: string };
     error.stderr = 'HTTP 504: request timed out\n';
-    mockExecFileSync.mockImplementation(() => {
+
+    let callCount = 0;
+    mockExecFileSync.mockImplementation(((cmd: string) => {
+      if (cmd === 'sleep') return '';
+      callCount++;
+      if (callCount < 3) throw error;
+      return 'success\n';
+    }) as typeof child_process.execFileSync);
+
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const result = ghExec(['pr', 'list', '--repo', 'backstage/backstage']);
+
+    expect(result).toBe('success');
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('attempt 1/3'));
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('attempt 2/3'));
+    spy.mockRestore();
+  });
+
+  it('returns empty string after all retries exhausted', () => {
+    const error = new Error('Command failed') as Error & { stderr: string };
+    error.stderr = 'HTTP 504: request timed out\n';
+    mockExecFileSync.mockImplementation(((cmd: string) => {
+      if (cmd === 'sleep') return '';
       throw error;
-    });
+    }) as typeof child_process.execFileSync);
 
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const result = ghExec(['pr', 'list', '--repo', 'backstage/backstage']);
 
     expect(result).toBe('');
-    expect(spy).toHaveBeenCalledWith(expect.stringContaining('HTTP 504: request timed out'));
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('failed after 3 attempts'));
     spy.mockRestore();
   });
 
+  it('sets lastExecFailed to true after all retries exhausted', () => {
+    mockExecFileSync.mockImplementation(((cmd: string) => {
+      if (cmd === 'sleep') return '';
+      throw new Error('fail');
+    }) as typeof child_process.execFileSync);
+
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    ghExec(['pr', 'list']);
+
+    expect(lastExecFailed()).toBe(true);
+    spy.mockRestore();
+  });
+
+  it('sets lastExecFailed to false on success', () => {
+    mockExecFileSync.mockReturnValue('ok\n');
+    ghExec(['version']);
+
+    expect(lastExecFailed()).toBe(false);
+  });
+
   it('handles errors without stderr property', () => {
-    mockExecFileSync.mockImplementation(() => {
+    mockExecFileSync.mockImplementation(((cmd: string) => {
+      if (cmd === 'sleep') return '';
       throw new Error('ETIMEDOUT');
-    });
+    }) as typeof child_process.execFileSync);
 
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const result = ghExec(['api', 'repos/org/repo/comments']);
@@ -118,13 +161,15 @@ describe('fetchIssues', () => {
     expect(fetchIssues('org/repo', '2026-07-03')).toEqual([]);
   });
 
-  it('returns empty array when gh command fails', () => {
-    mockExecFileSync.mockImplementation(() => {
+  it('returns empty array when gh command fails after retries', () => {
+    mockExecFileSync.mockImplementation(((cmd: string) => {
+      if (cmd === 'sleep') return '';
       throw new Error('Command failed');
-    });
+    }) as typeof child_process.execFileSync);
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     expect(fetchIssues('org/repo', '2026-07-03')).toEqual([]);
+    expect(lastExecFailed()).toBe(true);
     spy.mockRestore();
   });
 
@@ -237,13 +282,15 @@ describe('fetchPrs', () => {
     expect(fetchPrs('org/repo', '2026-07-03')).toEqual([]);
   });
 
-  it('returns empty array when gh command fails', () => {
-    mockExecFileSync.mockImplementation(() => {
+  it('returns empty array when gh command fails after retries', () => {
+    mockExecFileSync.mockImplementation(((cmd: string) => {
+      if (cmd === 'sleep') return '';
       throw new Error('Command failed');
-    });
+    }) as typeof child_process.execFileSync);
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     expect(fetchPrs('org/repo', '2026-07-03')).toEqual([]);
+    expect(lastExecFailed()).toBe(true);
     spy.mockRestore();
   });
 });
@@ -298,10 +345,11 @@ describe('fetchComments', () => {
     expect(comments[0].author).toBe('unknown');
   });
 
-  it('returns empty array when gh command fails', () => {
-    mockExecFileSync.mockImplementation(() => {
+  it('returns empty array when gh command fails after retries', () => {
+    mockExecFileSync.mockImplementation(((cmd: string) => {
+      if (cmd === 'sleep') return '';
       throw new Error('Command failed');
-    });
+    }) as typeof child_process.execFileSync);
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     expect(fetchComments('org/repo', 123)).toEqual([]);

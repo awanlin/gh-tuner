@@ -20,19 +20,57 @@ export interface GitHubItem {
   comments: GitHubComment[];
 }
 
+let _lastExecFailed = false;
+
+export function lastExecFailed(): boolean {
+  return _lastExecFailed;
+}
+
+const MAX_RETRIES = 3;
+const BACKOFF_BASE_MS = 1000;
+
+function sleepSync(ms: number): void {
+  execFileSync('sleep', [String(ms / 1000)]);
+}
+
+function extractErrorMessage(err: unknown): string {
+  const stderr =
+    err instanceof Error && 'stderr' in err ? String((err as { stderr: unknown }).stderr) : '';
+  return stderr.trim() || (err instanceof Error ? err.message : 'unknown error');
+}
+
 export function ghExec(args: string[]): string {
-  try {
-    return execFileSync('gh', args, {
-      encoding: 'utf-8',
-      timeout: 30_000,
-    }).trim();
-  } catch (err: unknown) {
-    const stderr =
-      err instanceof Error && 'stderr' in err ? String((err as { stderr: unknown }).stderr) : '';
-    const message = stderr.trim() || (err instanceof Error ? err.message : 'unknown error');
-    console.error(chalk.yellow(`  ⚠ gh ${args.slice(0, 3).join(' ')}... failed: ${message}`));
-    return '';
+  const label = `gh ${args.slice(0, 3).join(' ')}...`;
+
+  _lastExecFailed = false;
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const result = execFileSync('gh', args, {
+        encoding: 'utf-8',
+        timeout: 30_000,
+      }).trim();
+      return result;
+    } catch (err: unknown) {
+      const message = extractErrorMessage(err);
+
+      if (attempt < MAX_RETRIES) {
+        const delay = BACKOFF_BASE_MS * Math.pow(3, attempt - 1);
+        console.error(
+          chalk.yellow(`  ⚠ ${label} failed (attempt ${attempt}/${MAX_RETRIES}): ${message}`),
+        );
+        console.error(chalk.yellow(`    Retrying in ${delay / 1000}s...`));
+        sleepSync(delay);
+      } else {
+        console.error(
+          chalk.yellow(`  ⚠ ${label} failed after ${MAX_RETRIES} attempts: ${message}`),
+        );
+      }
+    }
   }
+
+  _lastExecFailed = true;
+  return '';
 }
 
 const ISSUE_FIELDS = 'number,title,url,createdAt,updatedAt,labels,author,state';
