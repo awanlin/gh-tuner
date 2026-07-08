@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 
 export interface GitHubComment {
   author: string;
@@ -20,7 +20,7 @@ export interface GitHubItem {
 }
 
 export function ghExec(args: string[]): string {
-  return execSync(`gh ${args.join(' ')}`, {
+  return execFileSync('gh', args, {
     encoding: 'utf-8',
     timeout: 30_000,
   }).trim();
@@ -113,8 +113,6 @@ export function fetchComments(repo: string, number: number): GitHubComment[] {
     'api',
     `repos/${repo}/issues/${number}/comments`,
     '--paginate',
-    '--jq',
-    '.[].login = .user.login',
   ]);
 
   if (!raw) return [];
