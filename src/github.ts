@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import chalk from 'chalk';
 
 export interface GitHubComment {
   author: string;
@@ -20,10 +21,18 @@ export interface GitHubItem {
 }
 
 export function ghExec(args: string[]): string {
-  return execFileSync('gh', args, {
-    encoding: 'utf-8',
-    timeout: 30_000,
-  }).trim();
+  try {
+    return execFileSync('gh', args, {
+      encoding: 'utf-8',
+      timeout: 30_000,
+    }).trim();
+  } catch (err: unknown) {
+    const stderr =
+      err instanceof Error && 'stderr' in err ? String((err as { stderr: unknown }).stderr) : '';
+    const message = stderr.trim() || (err instanceof Error ? err.message : 'unknown error');
+    console.error(chalk.yellow(`  ⚠ gh ${args.slice(0, 3).join(' ')}... failed: ${message}`));
+    return '';
+  }
 }
 
 const ISSUE_FIELDS = 'number,title,url,createdAt,updatedAt,labels,author,state';
