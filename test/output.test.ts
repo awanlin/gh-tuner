@@ -59,6 +59,7 @@ describe('generateMarkdown', () => {
       excludedAwaiting: 3,
       excludedSystem: 7,
       areaStats: [{ area: 'area:search', openIssues: 5, openPrs: 2, oldest: '31d' }],
+      failedRepos: [],
     };
 
     const md = generateMarkdown(input);
@@ -85,6 +86,7 @@ describe('generateMarkdown', () => {
       excludedAwaiting: 0,
       excludedSystem: 0,
       areaStats: [],
+      failedRepos: [],
     };
 
     const md = generateMarkdown(input);
@@ -115,11 +117,57 @@ describe('generateMarkdown', () => {
       excludedAwaiting: 0,
       excludedSystem: 0,
       areaStats: [],
+      failedRepos: [],
     };
 
     const md = generateMarkdown(input);
     const pos1 = md.indexOf('#1');
     const pos2 = md.indexOf('#2');
     expect(pos1).toBeLessThan(pos2);
+  });
+
+  it('renders failed repos warning when present', () => {
+    const input: SummaryInput = {
+      mode: 'prs',
+      generatedDate: new Date('2026-07-11'),
+      sinceDate: new Date('2026-07-04'),
+      reposScanned: 5,
+      reposSkipped: 0,
+      newItems: [],
+      updatedItems: [],
+      security: [],
+      excludedAwaiting: 0,
+      excludedSystem: 0,
+      areaStats: [],
+      failedRepos: [
+        { name: 'backstage/backstage', mode: 'PRs' },
+        { name: 'backstage/community-plugins', mode: 'issues' },
+      ],
+    };
+
+    const md = generateMarkdown(input);
+    expect(md).toContain('⚠ Failed to fetch');
+    expect(md).toContain('backstage/backstage (PRs)');
+    expect(md).toContain('backstage/community-plugins (issues)');
+  });
+
+  it('omits failed repos warning when none failed', () => {
+    const input: SummaryInput = {
+      mode: 'issues',
+      generatedDate: new Date('2026-07-08'),
+      sinceDate: new Date('2026-07-03'),
+      reposScanned: 3,
+      reposSkipped: 0,
+      newItems: [],
+      updatedItems: [],
+      security: [],
+      excludedAwaiting: 0,
+      excludedSystem: 0,
+      areaStats: [],
+      failedRepos: [],
+    };
+
+    const md = generateMarkdown(input);
+    expect(md).not.toContain('Failed to fetch');
   });
 });
