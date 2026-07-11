@@ -69,6 +69,7 @@ describe('generateMarkdown', () => {
       excludedAuthor: [],
       excludedDrafts: [],
       excludedChangesRequested: [],
+      mentioned: [],
       showExcluded: false,
       areaStats: [{ area: 'area:search', openIssues: 5, openPrs: 2, oldest: '31d' }],
       failedRepos: [],
@@ -100,6 +101,7 @@ describe('generateMarkdown', () => {
       excludedAuthor: [],
       excludedDrafts: [],
       excludedChangesRequested: [],
+      mentioned: [],
       showExcluded: false,
       areaStats: [],
       failedRepos: [],
@@ -135,6 +137,7 @@ describe('generateMarkdown', () => {
       excludedAuthor: [],
       excludedDrafts: [],
       excludedChangesRequested: [],
+      mentioned: [],
       showExcluded: false,
       areaStats: [],
       failedRepos: [],
@@ -161,6 +164,7 @@ describe('generateMarkdown', () => {
       excludedAuthor: [],
       excludedDrafts: [],
       excludedChangesRequested: [],
+      mentioned: [],
       showExcluded: false,
       areaStats: [],
       failedRepos: [
@@ -190,6 +194,7 @@ describe('generateMarkdown', () => {
       excludedAuthor: makeItems(4),
       excludedDrafts: [],
       excludedChangesRequested: [],
+      mentioned: [],
       showExcluded: false,
       areaStats: [],
       failedRepos: [],
@@ -214,6 +219,7 @@ describe('generateMarkdown', () => {
       excludedAuthor: [],
       excludedDrafts: [],
       excludedChangesRequested: [],
+      mentioned: [],
       showExcluded: false,
       areaStats: [],
       failedRepos: [],
@@ -238,6 +244,7 @@ describe('generateMarkdown', () => {
       excludedAuthor: [],
       excludedDrafts: makeItems(3),
       excludedChangesRequested: [],
+      mentioned: [],
       showExcluded: false,
       areaStats: [],
       failedRepos: [],
@@ -245,6 +252,67 @@ describe('generateMarkdown', () => {
 
     const md = generateMarkdown(input);
     expect(md).toContain('3 drafts excluded');
+  });
+
+  it('renders mentioned section when there are pending mentions', () => {
+    const mentionedItem = makeItem({
+      number: 99,
+      title: 'Need your input on search',
+      url: 'https://github.com/backstage/backstage/issues/99',
+      comments: [
+        { author: 'someone', createdAt: '2026-07-09T10:00:00Z', body: '@awanlin thoughts?' },
+      ],
+    });
+
+    const input: SummaryInput = {
+      mode: 'issues',
+      generatedDate: new Date('2026-07-11'),
+      sinceDate: new Date('2026-07-04'),
+      reposScanned: 5,
+      reposSkipped: 0,
+      newItems: [],
+      updatedItems: [],
+      security: [],
+      excludedAwaiting: [],
+      excludedSystem: [],
+      excludedAuthor: [],
+      excludedDrafts: [],
+      excludedChangesRequested: [],
+      mentioned: [mentionedItem],
+      showExcluded: false,
+      areaStats: [],
+      failedRepos: [],
+    };
+
+    const md = generateMarkdown(input);
+    expect(md).toContain('## Mentioned — Awaiting Reply (1)');
+    expect(md).toContain('#99');
+    expect(md).toContain('Need your input on search');
+  });
+
+  it('omits mentioned section when empty', () => {
+    const input: SummaryInput = {
+      mode: 'prs',
+      generatedDate: new Date('2026-07-11'),
+      sinceDate: new Date('2026-07-04'),
+      reposScanned: 5,
+      reposSkipped: 0,
+      newItems: [],
+      updatedItems: [],
+      security: [],
+      excludedAwaiting: [],
+      excludedSystem: [],
+      excludedAuthor: [],
+      excludedDrafts: [],
+      excludedChangesRequested: [],
+      mentioned: [],
+      showExcluded: false,
+      areaStats: [],
+      failedRepos: [],
+    };
+
+    const md = generateMarkdown(input);
+    expect(md).not.toContain('Mentioned');
   });
 
   it('omits failed repos warning when none failed', () => {
@@ -262,6 +330,7 @@ describe('generateMarkdown', () => {
       excludedAuthor: [],
       excludedDrafts: [],
       excludedChangesRequested: [],
+      mentioned: [],
       showExcluded: false,
       areaStats: [],
       failedRepos: [],
@@ -305,6 +374,7 @@ describe('generateMarkdown', () => {
       excludedAuthor: [ownPr],
       excludedDrafts: [draftPr],
       excludedChangesRequested: [],
+      mentioned: [],
       showExcluded: true,
       areaStats: [],
       failedRepos: [],
@@ -337,6 +407,7 @@ describe('generateMarkdown', () => {
       excludedAuthor: makeItems(1),
       excludedDrafts: [],
       excludedChangesRequested: [],
+      mentioned: [],
       showExcluded: false,
       areaStats: [],
       failedRepos: [],

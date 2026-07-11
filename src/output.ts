@@ -26,6 +26,7 @@ export interface SummaryInput {
   excludedAuthor: GitHubItem[];
   excludedDrafts: GitHubItem[];
   excludedChangesRequested: GitHubItem[];
+  mentioned: GitHubItem[];
   showExcluded: boolean;
   areaStats: AreaStat[];
   failedRepos: FailedRepo[];
@@ -128,6 +129,13 @@ export function generateMarkdown(input: SummaryInput): string {
         : 'Updated Issues — Human Engagement';
   const updatedSection = renderSection(updatedLabel, input.updatedItems, input.generatedDate);
   if (updatedSection) lines.push(updatedSection);
+
+  const mentionedSection = renderSection(
+    'Mentioned — Awaiting Reply',
+    input.mentioned,
+    input.generatedDate,
+  );
+  if (mentionedSection) lines.push(mentionedSection);
 
   lines.push('---');
   const footerParts = [

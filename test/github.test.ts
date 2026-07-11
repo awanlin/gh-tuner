@@ -1,6 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as child_process from 'node:child_process';
-import { ghExec, fetchIssues, fetchPrs, fetchComments, lastExecFailed } from '../src/github.js';
+import {
+  ghExec,
+  fetchIssues,
+  fetchPrs,
+  fetchMentionedIssues,
+  fetchMentionedPrs,
+  fetchComments,
+  lastExecFailed,
+} from '../src/github.js';
 
 vi.mock('node:child_process', () => ({
   execFileSync: vi.fn(),
@@ -345,6 +353,28 @@ describe('fetchPrs', () => {
     expect(fetchPrs('org/repo', '2026-07-03')).toEqual([]);
     expect(lastExecFailed()).toBe(true);
     spy.mockRestore();
+  });
+});
+
+describe('fetchMentionedIssues', () => {
+  it('passes mentions qualifier in search', () => {
+    mockExecFileSync.mockReturnValue('[]');
+    fetchMentionedIssues('backstage/backstage', '2026-07-03', 'awanlin');
+
+    const args = mockExecFileSync.mock.calls[0][1] as string[];
+    const searchIdx = args.indexOf('--search');
+    expect(args[searchIdx + 1]).toBe('updated:>=2026-07-03 mentions:awanlin');
+  });
+});
+
+describe('fetchMentionedPrs', () => {
+  it('passes mentions qualifier in search', () => {
+    mockExecFileSync.mockReturnValue('[]');
+    fetchMentionedPrs('backstage/backstage', '2026-07-03', 'awanlin');
+
+    const args = mockExecFileSync.mock.calls[0][1] as string[];
+    const searchIdx = args.indexOf('--search');
+    expect(args[searchIdx + 1]).toBe('updated:>=2026-07-03 mentions:awanlin');
   });
 });
 
