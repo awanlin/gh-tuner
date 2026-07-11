@@ -24,9 +24,13 @@ export function isAwaitingOthers(item: GitHubItem, user: string): boolean {
   return last.author === user;
 }
 
-export function hasReviewFromOthers(item: GitHubItem, user: string): boolean {
+export function hasChangesRequestedByOthers(item: GitHubItem, user: string): boolean {
   return item.reviews.some(
-    (r) => !isBot(r.author) && r.author !== item.author && r.author !== user,
+    (r) =>
+      r.state === 'CHANGES_REQUESTED' &&
+      !isBot(r.author) &&
+      r.author !== item.author &&
+      r.author !== user,
   );
 }
 
