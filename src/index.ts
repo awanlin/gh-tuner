@@ -28,6 +28,7 @@ interface RunOpts {
   output?: string;
   open: boolean;
   openAll?: boolean;
+  showExcluded?: boolean;
 }
 
 async function run(mode: Mode, opts: RunOpts): Promise<void> {
@@ -71,10 +72,10 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
   const allUpdatedItems: GitHubItem[] = [];
   const allSecurity: GitHubItem[] = [];
   const failedRepos: FailedRepo[] = [];
-  let totalExcludedAwaiting = 0;
-  let totalExcludedSystem = 0;
-  let totalExcludedAuthor = 0;
-  let totalExcludedDrafts = 0;
+  const allExcludedAwaiting: GitHubItem[] = [];
+  const allExcludedSystem: GitHubItem[] = [];
+  const allExcludedAuthor: GitHubItem[] = [];
+  const allExcludedDrafts: GitHubItem[] = [];
 
   for (const repo of includedRepos) {
     console.log(chalk.gray(`  Fetching ${repo.name}...`));
@@ -104,15 +105,23 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
     }
 
     if (cfg.filters.excludeAuthor) {
-      const before = items.length;
-      items = items.filter((item) => item.author !== cfg.user);
-      totalExcludedAuthor += before - items.length;
+      items = items.filter((item) => {
+        if (item.author === cfg.user) {
+          allExcludedAuthor.push(item);
+          return false;
+        }
+        return true;
+      });
     }
 
     if (cfg.filters.excludeDrafts) {
-      const before = items.length;
-      items = items.filter((item) => !item.isDraft);
-      totalExcludedDrafts += before - items.length;
+      items = items.filter((item) => {
+        if (item.isDraft) {
+          allExcludedDrafts.push(item);
+          return false;
+        }
+        return true;
+      });
     }
 
     for (const item of items) {
@@ -139,8 +148,8 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
 
     allUpdatedItems.push(...filtered.items);
     allSecurity.push(...filtered.security);
-    totalExcludedAwaiting += filtered.excludedAwaiting;
-    totalExcludedSystem += filtered.excludedSystem;
+    allExcludedAwaiting.push(...filtered.excludedAwaiting);
+    allExcludedSystem.push(...filtered.excludedSystem);
   }
 
   const areaStats = computeAreaStats(cfg, allNewItems, allUpdatedItems, allSecurity, today);
@@ -154,10 +163,11 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
     newItems: allNewItems,
     updatedItems: allUpdatedItems,
     security: allSecurity,
-    excludedAwaiting: totalExcludedAwaiting,
-    excludedSystem: totalExcludedSystem,
-    excludedAuthor: totalExcludedAuthor,
-    excludedDrafts: totalExcludedDrafts,
+    excludedAwaiting: allExcludedAwaiting,
+    excludedSystem: allExcludedSystem,
+    excludedAuthor: allExcludedAuthor,
+    excludedDrafts: allExcludedDrafts,
+    showExcluded: opts.showExcluded ?? false,
     areaStats,
     failedRepos,
   };
@@ -225,7 +235,8 @@ function addCommonOptions(cmd: Command): Command {
     .option('--since <date>', 'Override delta window start (ISO date)')
     .option('--output <path>', 'Write markdown to file')
     .option('--no-open', 'Skip opening items in browser')
-    .option('--open-all', 'Override the >50 item cap');
+    .option('--open-all', 'Override the >50 item cap')
+    .option('--show-excluded', 'List items removed by filters');
 }
 
 const program = new Command();

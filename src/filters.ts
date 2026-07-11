@@ -32,8 +32,8 @@ export function hasSecurityKeyword(item: GitHubItem, keywords: string[]): boolea
 export interface FilterResult {
   items: GitHubItem[];
   security: GitHubItem[];
-  excludedAwaiting: number;
-  excludedSystem: number;
+  excludedAwaiting: GitHubItem[];
+  excludedSystem: GitHubItem[];
 }
 
 export function applyFilters(
@@ -47,8 +47,8 @@ export function applyFilters(
 ): FilterResult {
   const security: GitHubItem[] = [];
   const kept: GitHubItem[] = [];
-  let excludedAwaiting = 0;
-  let excludedSystem = 0;
+  const excludedAwaiting: GitHubItem[] = [];
+  const excludedSystem: GitHubItem[] = [];
 
   for (const item of items) {
     const isSecurity = hasSecurityKeyword(item, opts.securityKeywords);
@@ -64,12 +64,12 @@ export function applyFilters(
     }
 
     if (opts.filters.humanEngagementOnly && !hasHumanEngagement(item, opts.since)) {
-      excludedSystem++;
+      excludedSystem.push(item);
       continue;
     }
 
     if (opts.filters.excludeAwaitingOthers && isAwaitingOthers(item, opts.user)) {
-      excludedAwaiting++;
+      excludedAwaiting.push(item);
       continue;
     }
 
