@@ -4,6 +4,7 @@ import {
   hasHumanEngagement,
   isAwaitingOthers,
   hasChangesRequestedByOthers,
+  isUnrepliedMention,
   hasSecurityKeyword,
   applyFilters,
 } from '../src/filters.js';
@@ -99,6 +100,42 @@ describe('isAwaitingOthers', () => {
       ],
     });
     expect(isAwaitingOthers(item, 'awanlin')).toBe(true);
+  });
+});
+
+describe('isUnrepliedMention', () => {
+  it('returns true when user has not commented since the date', () => {
+    const item = makeItem({
+      comments: [
+        { author: 'someone', createdAt: '2026-07-05T10:00:00Z', body: '@awanlin thoughts?' },
+      ],
+    });
+    expect(isUnrepliedMention(item, 'awanlin', '2026-07-03')).toBe(true);
+  });
+
+  it('returns false when user has commented since the date', () => {
+    const item = makeItem({
+      comments: [
+        { author: 'someone', createdAt: '2026-07-04T10:00:00Z', body: '@awanlin thoughts?' },
+        { author: 'awanlin', createdAt: '2026-07-05T10:00:00Z', body: 'Looking into it' },
+      ],
+    });
+    expect(isUnrepliedMention(item, 'awanlin', '2026-07-03')).toBe(false);
+  });
+
+  it('returns true when user commented before since but not after', () => {
+    const item = makeItem({
+      comments: [
+        { author: 'awanlin', createdAt: '2026-07-01T10:00:00Z', body: 'Old reply' },
+        { author: 'someone', createdAt: '2026-07-05T10:00:00Z', body: '@awanlin any update?' },
+      ],
+    });
+    expect(isUnrepliedMention(item, 'awanlin', '2026-07-03')).toBe(true);
+  });
+
+  it('returns true when there are no comments at all', () => {
+    const item = makeItem({ comments: [] });
+    expect(isUnrepliedMention(item, 'awanlin', '2026-07-03')).toBe(true);
   });
 });
 

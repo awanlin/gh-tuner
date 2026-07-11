@@ -174,6 +174,48 @@ export function fetchPrs(repo: string, since: string): GitHubItem[] {
   return (JSON.parse(raw) as GhItem[]).map((item) => mapItem(item, true));
 }
 
+export function fetchMentionedIssues(repo: string, since: string, user: string): GitHubItem[] {
+  const sinceDate = since.slice(0, 10);
+  const raw = ghExec([
+    'issue',
+    'list',
+    '--repo',
+    repo,
+    '--state',
+    'open',
+    '--limit',
+    '200',
+    '--json',
+    ISSUE_FIELDS,
+    '--search',
+    `updated:>=${sinceDate} mentions:${user}`,
+  ]);
+
+  if (!raw) return [];
+  return (JSON.parse(raw) as GhItem[]).map((item) => mapItem(item, false));
+}
+
+export function fetchMentionedPrs(repo: string, since: string, user: string): GitHubItem[] {
+  const sinceDate = since.slice(0, 10);
+  const raw = ghExec([
+    'pr',
+    'list',
+    '--repo',
+    repo,
+    '--state',
+    'open',
+    '--limit',
+    '200',
+    '--json',
+    PR_FIELDS,
+    '--search',
+    `updated:>=${sinceDate} mentions:${user}`,
+  ]);
+
+  if (!raw) return [];
+  return (JSON.parse(raw) as GhItem[]).map((item) => mapItem(item, true));
+}
+
 export function fetchComments(repo: string, number: number): GitHubComment[] {
   const raw = ghExec(['api', `repos/${repo}/issues/${number}/comments`, '--paginate']);
 

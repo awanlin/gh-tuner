@@ -8,8 +8,21 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(resolve(__dirname, '..', 'package.json'), 'utf-8'));
 import { loadConfig } from './config.js';
 import { getScheduleForDay, resolveSince, isRepoIncluded } from './schedule.js';
-import { fetchIssues, fetchPrs, fetchComments, lastExecFailed, type GitHubItem } from './github.js';
-import { applyFilters, hasSecurityKeyword, hasChangesRequestedByOthers } from './filters.js';
+import {
+  fetchIssues,
+  fetchPrs,
+  fetchMentionedIssues,
+  fetchMentionedPrs,
+  fetchComments,
+  lastExecFailed,
+  type GitHubItem,
+} from './github.js';
+import {
+  applyFilters,
+  hasSecurityKeyword,
+  hasChangesRequestedByOthers,
+  isUnrepliedMention,
+} from './filters.js';
 import {
   generateMarkdown,
   formatAge,
@@ -163,6 +176,40 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
     allExcludedSystem.push(...filtered.excludedSystem);
   }
 
+  const allMentioned: GitHubItem[] = [];
+  const seenUrls = new Set(
+    [
+      ...allNewItems,
+      ...allUpdatedItems,
+      ...allSecurity,
+      ...allExcludedAwaiting,
+      ...allExcludedSystem,
+      ...allExcludedAuthor,
+      ...allExcludedDrafts,
+      ...allExcludedChangesRequested,
+    ].map((i) => i.url),
+  );
+
+  for (const repo of includedRepos) {
+    let mentioned: GitHubItem[] = [];
+
+    if (mode === 'issues' || mode === 'all') {
+      mentioned.push(...fetchMentionedIssues(repo.name, sinceStr, cfg.user));
+    }
+    if (mode === 'prs' || mode === 'all') {
+      mentioned.push(...fetchMentionedPrs(repo.name, sinceStr, cfg.user));
+    }
+
+    mentioned = mentioned.filter((i) => !seenUrls.has(i.url));
+
+    for (const item of mentioned) {
+      item.comments = fetchComments(repo.name, item.number);
+    }
+
+    const pending = mentioned.filter((i) => isUnrepliedMention(i, cfg.user, sinceStr));
+    allMentioned.push(...pending);
+  }
+
   const areaStats = computeAreaStats(cfg, allNewItems, allUpdatedItems, allSecurity, today);
 
   const summaryInput: SummaryInput = {
@@ -179,6 +226,7 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
     excludedAuthor: allExcludedAuthor,
     excludedDrafts: allExcludedDrafts,
     excludedChangesRequested: allExcludedChangesRequested,
+    mentioned: allMentioned,
     showExcluded: opts.showExcluded ?? false,
     areaStats,
     failedRepos,
