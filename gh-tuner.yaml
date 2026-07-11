@@ -57,3 +57,4 @@ filters:
   humanEngagementOnly: true
   excludeAwaitingOthers: true
   excludeAuthor: true
+  excludeDrafts: true

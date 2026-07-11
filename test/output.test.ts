@@ -35,6 +35,7 @@ describe('generateMarkdown', () => {
       author: 'someone',
       state: 'open',
       isPr: false,
+      isDraft: false,
       comments: [],
       ...overrides,
     };
@@ -59,6 +60,7 @@ describe('generateMarkdown', () => {
       excludedAwaiting: 3,
       excludedSystem: 7,
       excludedAuthor: 0,
+      excludedDrafts: 0,
       areaStats: [{ area: 'area:search', openIssues: 5, openPrs: 2, oldest: '31d' }],
       failedRepos: [],
     };
@@ -87,6 +89,7 @@ describe('generateMarkdown', () => {
       excludedAwaiting: 0,
       excludedSystem: 0,
       excludedAuthor: 0,
+      excludedDrafts: 0,
       areaStats: [],
       failedRepos: [],
     };
@@ -119,6 +122,7 @@ describe('generateMarkdown', () => {
       excludedAwaiting: 0,
       excludedSystem: 0,
       excludedAuthor: 0,
+      excludedDrafts: 0,
       areaStats: [],
       failedRepos: [],
     };
@@ -142,6 +146,7 @@ describe('generateMarkdown', () => {
       excludedAwaiting: 0,
       excludedSystem: 0,
       excludedAuthor: 0,
+      excludedDrafts: 0,
       areaStats: [],
       failedRepos: [
         { name: 'backstage/backstage', mode: 'PRs' },
@@ -189,12 +194,35 @@ describe('generateMarkdown', () => {
       excludedAwaiting: 0,
       excludedSystem: 0,
       excludedAuthor: 0,
+      excludedDrafts: 0,
       areaStats: [],
       failedRepos: [],
     };
 
     const md = generateMarkdown(input);
     expect(md).not.toContain('own issues excluded');
+  });
+
+  it('shows drafts excluded in footer when excludedDrafts > 0', () => {
+    const input: SummaryInput = {
+      mode: 'prs',
+      generatedDate: new Date('2026-07-11'),
+      sinceDate: new Date('2026-07-04'),
+      reposScanned: 5,
+      reposSkipped: 0,
+      newItems: [],
+      updatedItems: [],
+      security: [],
+      excludedAwaiting: 0,
+      excludedSystem: 0,
+      excludedAuthor: 0,
+      excludedDrafts: 3,
+      areaStats: [],
+      failedRepos: [],
+    };
+
+    const md = generateMarkdown(input);
+    expect(md).toContain('3 drafts excluded');
   });
 
   it('omits failed repos warning when none failed', () => {
@@ -210,6 +238,7 @@ describe('generateMarkdown', () => {
       excludedAwaiting: 0,
       excludedSystem: 0,
       excludedAuthor: 0,
+      excludedDrafts: 0,
       areaStats: [],
       failedRepos: [],
     };

@@ -19,6 +19,7 @@ function makeItem(overrides: Partial<GitHubItem> = {}): GitHubItem {
     author: 'someuser',
     state: 'open',
     isPr: false,
+    isDraft: false,
     comments: [],
     ...overrides,
   };
@@ -141,7 +142,12 @@ describe('applyFilters', () => {
     const result = applyFilters([newItem, securityItem, systemOnlyItem], {
       since: '2026-07-03',
       user: 'awanlin',
-      filters: { humanEngagementOnly: true, excludeAwaitingOthers: true, excludeAuthor: true },
+      filters: {
+        humanEngagementOnly: true,
+        excludeAwaitingOthers: true,
+        excludeAuthor: true,
+        excludeDrafts: true,
+      },
       securityKeywords: ['CVE'],
     });
 

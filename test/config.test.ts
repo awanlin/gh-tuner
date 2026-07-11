@@ -56,13 +56,14 @@ filters:
     expect(config.filters.humanEngagementOnly).toBe(true);
     expect(config.filters.excludeAwaitingOthers).toBe(false);
     expect(config.filters.excludeAuthor).toBe(true);
+    expect(config.filters.excludeDrafts).toBe(true);
   });
 
   it('throws on missing config file', () => {
     expect(() => loadConfig('/nonexistent/gh-tuner.yaml')).toThrow();
   });
 
-  it('defaults excludeAuthor to true when not specified', () => {
+  it('defaults excludeAuthor and excludeDrafts to true when not specified', () => {
     const path = writeTempConfig(`
 user: testuser
 startDate: 2026-07-07
@@ -79,6 +80,7 @@ filters:
 `);
     const config = loadConfig(path);
     expect(config.filters.excludeAuthor).toBe(true);
+    expect(config.filters.excludeDrafts).toBe(true);
   });
 
   it('respects excludeAuthor when explicitly set to false', () => {

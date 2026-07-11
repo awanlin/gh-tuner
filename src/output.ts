@@ -24,6 +24,7 @@ export interface SummaryInput {
   excludedAwaiting: number;
   excludedSystem: number;
   excludedAuthor: number;
+  excludedDrafts: number;
   areaStats: AreaStat[];
   failedRepos: FailedRepo[];
 }
@@ -133,6 +134,9 @@ export function generateMarkdown(input: SummaryInput): string {
   ];
   if (input.excludedAuthor > 0) {
     footerParts.push(`${input.excludedAuthor} own ${itemLabel} excluded`);
+  }
+  if (input.excludedDrafts > 0) {
+    footerParts.push(`${input.excludedDrafts} drafts excluded`);
   }
   lines.push(`*${footerParts.join(' · ')}*`);
 
