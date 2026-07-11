@@ -3,6 +3,7 @@ import {
   isBot,
   hasHumanEngagement,
   isAwaitingOthers,
+  hasReviewFromOthers,
   hasSecurityKeyword,
   applyFilters,
 } from '../src/filters.js';
@@ -20,6 +21,7 @@ function makeItem(overrides: Partial<GitHubItem> = {}): GitHubItem {
     state: 'open',
     isPr: false,
     isDraft: false,
+    reviews: [],
     comments: [],
     ...overrides,
   };
@@ -117,6 +119,62 @@ describe('hasSecurityKeyword', () => {
   });
 });
 
+describe('hasReviewFromOthers', () => {
+  it('returns true when a non-bot, non-author, non-user has reviewed', () => {
+    const item = makeItem({
+      author: 'contributor',
+      isPr: true,
+      reviews: [{ author: 'reviewer1', state: 'APPROVED' }],
+    });
+    expect(hasReviewFromOthers(item, 'awanlin')).toBe(true);
+  });
+
+  it('returns false when only bots have reviewed', () => {
+    const item = makeItem({
+      author: 'contributor',
+      isPr: true,
+      reviews: [{ author: 'copilot-pull-request-reviewer', state: 'COMMENTED' }],
+    });
+    expect(hasReviewFromOthers(item, 'awanlin')).toBe(false);
+  });
+
+  it('returns false when only the PR author has reviewed', () => {
+    const item = makeItem({
+      author: 'contributor',
+      isPr: true,
+      reviews: [{ author: 'contributor', state: 'COMMENTED' }],
+    });
+    expect(hasReviewFromOthers(item, 'awanlin')).toBe(false);
+  });
+
+  it('returns false when only the configured user has reviewed', () => {
+    const item = makeItem({
+      author: 'contributor',
+      isPr: true,
+      reviews: [{ author: 'awanlin', state: 'APPROVED' }],
+    });
+    expect(hasReviewFromOthers(item, 'awanlin')).toBe(false);
+  });
+
+  it('returns false when there are no reviews', () => {
+    const item = makeItem({ author: 'contributor', isPr: true, reviews: [] });
+    expect(hasReviewFromOthers(item, 'awanlin')).toBe(false);
+  });
+
+  it('returns true when mixed reviews include a qualifying human', () => {
+    const item = makeItem({
+      author: 'contributor',
+      isPr: true,
+      reviews: [
+        { author: 'copilot-pull-request-reviewer', state: 'COMMENTED' },
+        { author: 'awanlin', state: 'APPROVED' },
+        { author: 'other-maintainer', state: 'CHANGES_REQUESTED' },
+      ],
+    });
+    expect(hasReviewFromOthers(item, 'awanlin')).toBe(true);
+  });
+});
+
 describe('applyFilters', () => {
   it('separates security items and filters system-only updates', () => {
     const newItem = makeItem({
@@ -147,6 +205,7 @@ describe('applyFilters', () => {
         excludeAwaitingOthers: true,
         excludeAuthor: true,
         excludeDrafts: true,
+        excludeReviewedByOthers: true,
       },
       securityKeywords: ['CVE'],
     });

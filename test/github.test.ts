@@ -143,6 +143,7 @@ describe('fetchIssues', () => {
       state: 'OPEN',
       isPr: false,
       isDraft: false,
+      reviews: [],
       comments: [],
     });
   });
@@ -266,7 +267,36 @@ describe('fetchPrs', () => {
     expect(items).toHaveLength(1);
     expect(items[0].isPr).toBe(true);
     expect(items[0].isDraft).toBe(false);
+    expect(items[0].reviews).toEqual([]);
     expect(items[0].number).toBe(456);
+  });
+
+  it('maps reviews from PR data', () => {
+    const ghOutput = JSON.stringify([
+      {
+        number: 500,
+        title: 'reviewed PR',
+        url: 'https://github.com/org/repo/pull/500',
+        createdAt: '2026-07-05T10:00:00Z',
+        updatedAt: '2026-07-06T12:00:00Z',
+        labels: [],
+        author: { login: 'contributor' },
+        state: 'OPEN',
+        reviews: [
+          { author: { login: 'reviewer1' }, state: 'APPROVED' },
+          { author: { login: 'copilot-pull-request-reviewer' }, state: 'COMMENTED' },
+        ],
+        reviewDecision: 'APPROVED',
+      },
+    ]);
+    mockExecFileSync.mockReturnValue(ghOutput);
+
+    const items = fetchPrs('org/repo', '2026-07-03');
+
+    expect(items[0].reviews).toEqual([
+      { author: 'reviewer1', state: 'APPROVED' },
+      { author: 'copilot-pull-request-reviewer', state: 'COMMENTED' },
+    ]);
   });
 
   it('maps isDraft from PR data', () => {

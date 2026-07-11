@@ -9,7 +9,7 @@ const pkg = JSON.parse(readFileSync(resolve(__dirname, '..', 'package.json'), 'u
 import { loadConfig } from './config.js';
 import { getScheduleForDay, resolveSince, isRepoIncluded } from './schedule.js';
 import { fetchIssues, fetchPrs, fetchComments, lastExecFailed, type GitHubItem } from './github.js';
-import { applyFilters, hasSecurityKeyword } from './filters.js';
+import { applyFilters, hasSecurityKeyword, hasReviewFromOthers } from './filters.js';
 import {
   generateMarkdown,
   formatAge,
@@ -76,6 +76,7 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
   const allExcludedSystem: GitHubItem[] = [];
   const allExcludedAuthor: GitHubItem[] = [];
   const allExcludedDrafts: GitHubItem[] = [];
+  const allExcludedReviewed: GitHubItem[] = [];
 
   for (const repo of includedRepos) {
     console.log(chalk.gray(`  Fetching ${repo.name}...`));
@@ -118,6 +119,16 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
       items = items.filter((item) => {
         if (item.isDraft) {
           allExcludedDrafts.push(item);
+          return false;
+        }
+        return true;
+      });
+    }
+
+    if (cfg.filters.excludeReviewedByOthers) {
+      items = items.filter((item) => {
+        if (item.isPr && hasReviewFromOthers(item, cfg.user)) {
+          allExcludedReviewed.push(item);
           return false;
         }
         return true;
@@ -167,6 +178,7 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
     excludedSystem: allExcludedSystem,
     excludedAuthor: allExcludedAuthor,
     excludedDrafts: allExcludedDrafts,
+    excludedReviewed: allExcludedReviewed,
     showExcluded: opts.showExcluded ?? false,
     areaStats,
     failedRepos,

@@ -25,6 +25,7 @@ export interface SummaryInput {
   excludedSystem: GitHubItem[];
   excludedAuthor: GitHubItem[];
   excludedDrafts: GitHubItem[];
+  excludedReviewed: GitHubItem[];
   showExcluded: boolean;
   areaStats: AreaStat[];
   failedRepos: FailedRepo[];
@@ -139,6 +140,9 @@ export function generateMarkdown(input: SummaryInput): string {
   if (input.excludedDrafts.length > 0) {
     footerParts.push(`${input.excludedDrafts.length} drafts excluded`);
   }
+  if (input.excludedReviewed.length > 0) {
+    footerParts.push(`${input.excludedReviewed.length} already reviewed`);
+  }
   lines.push(`*${footerParts.join(' · ')}*`);
 
   if (input.failedRepos.length > 0) {
@@ -170,6 +174,7 @@ function renderExcludedSection(input: SummaryInput): string {
   const sections: { label: string; items: GitHubItem[] }[] = [
     { label: 'Authored by you', items: input.excludedAuthor },
     { label: 'Draft PRs', items: input.excludedDrafts },
+    { label: 'Already reviewed', items: input.excludedReviewed },
     { label: 'Awaiting others', items: input.excludedAwaiting },
     { label: 'System-only updates', items: input.excludedSystem },
   ];

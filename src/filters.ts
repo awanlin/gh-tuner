@@ -24,6 +24,12 @@ export function isAwaitingOthers(item: GitHubItem, user: string): boolean {
   return last.author === user;
 }
 
+export function hasReviewFromOthers(item: GitHubItem, user: string): boolean {
+  return item.reviews.some(
+    (r) => !isBot(r.author) && r.author !== item.author && r.author !== user,
+  );
+}
+
 export function hasSecurityKeyword(item: GitHubItem, keywords: string[]): boolean {
   const text = `${item.title} ${item.comments.map((c) => c.body).join(' ')}`.toLowerCase();
   return keywords.some((kw) => text.includes(kw.toLowerCase()));
