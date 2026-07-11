@@ -16,6 +16,7 @@ export interface ScheduleEntry {
 export interface FilterConfig {
   humanEngagementOnly: boolean;
   excludeAwaitingOthers: boolean;
+  excludeAuthor: boolean;
 }
 
 export interface TunerConfig {
@@ -61,6 +62,7 @@ export function loadConfig(configPath: string): TunerConfig {
     filters: {
       humanEngagementOnly: parsed.filters.humanEngagementOnly ?? true,
       excludeAwaitingOthers: parsed.filters.excludeAwaitingOthers ?? true,
+      excludeAuthor: parsed.filters.excludeAuthor ?? true,
     },
   };
 }

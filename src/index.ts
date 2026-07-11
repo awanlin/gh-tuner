@@ -73,6 +73,7 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
   const failedRepos: FailedRepo[] = [];
   let totalExcludedAwaiting = 0;
   let totalExcludedSystem = 0;
+  let totalExcludedAuthor = 0;
 
   for (const repo of includedRepos) {
     console.log(chalk.gray(`  Fetching ${repo.name}...`));
@@ -99,6 +100,12 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
           item.author === cfg.user ||
           item.labels.includes(`involves:${cfg.user}`),
       );
+    }
+
+    if (cfg.filters.excludeAuthor) {
+      const before = items.length;
+      items = items.filter((item) => item.author !== cfg.user);
+      totalExcludedAuthor += before - items.length;
     }
 
     for (const item of items) {
@@ -142,6 +149,7 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
     security: allSecurity,
     excludedAwaiting: totalExcludedAwaiting,
     excludedSystem: totalExcludedSystem,
+    excludedAuthor: totalExcludedAuthor,
     areaStats,
     failedRepos,
   };
