@@ -17,6 +17,7 @@ export interface GitHubItem {
   author: string;
   state: string;
   isPr: boolean;
+  isDraft: boolean;
   comments: GitHubComment[];
 }
 
@@ -79,7 +80,7 @@ const ISSUE_FIELDS = 'number,title,url,createdAt,updatedAt,labels,author,state';
 // triggers expensive cross-service lookups in GitHub's GraphQL API) and the
 // data wasn't being surfaced in the output. When revisiting, fetch only the
 // rolled-up state (not individual contexts) — adds ~1s vs ~4.7s with contexts.
-const PR_FIELDS = 'number,title,url,createdAt,updatedAt,labels,author,state,reviewDecision';
+const PR_FIELDS = 'number,title,url,createdAt,updatedAt,labels,author,state,isDraft,reviewDecision';
 
 interface GhLabel {
   name: string;
@@ -94,6 +95,7 @@ interface GhItem {
   labels: GhLabel[];
   author: { login: string } | null;
   state: string;
+  isDraft?: boolean;
 }
 
 interface GhComment {
@@ -113,6 +115,7 @@ function mapItem(item: GhItem, isPr: boolean): GitHubItem {
     author: item.author?.login ?? 'unknown',
     state: item.state,
     isPr,
+    isDraft: item.isDraft ?? false,
     comments: [],
   };
 }

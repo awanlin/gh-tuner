@@ -142,6 +142,7 @@ describe('fetchIssues', () => {
       author: 'contributor',
       state: 'OPEN',
       isPr: false,
+      isDraft: false,
       comments: [],
     });
   });
@@ -264,7 +265,30 @@ describe('fetchPrs', () => {
 
     expect(items).toHaveLength(1);
     expect(items[0].isPr).toBe(true);
+    expect(items[0].isDraft).toBe(false);
     expect(items[0].number).toBe(456);
+  });
+
+  it('maps isDraft from PR data', () => {
+    const ghOutput = JSON.stringify([
+      {
+        number: 789,
+        title: 'wip: draft PR',
+        url: 'https://github.com/org/repo/pull/789',
+        createdAt: '2026-07-05T10:00:00Z',
+        updatedAt: '2026-07-06T12:00:00Z',
+        labels: [],
+        author: { login: 'contributor' },
+        state: 'OPEN',
+        isDraft: true,
+        reviewDecision: '',
+      },
+    ]);
+    mockExecFileSync.mockReturnValue(ghOutput);
+
+    const items = fetchPrs('org/repo', '2026-07-03');
+
+    expect(items[0].isDraft).toBe(true);
   });
 
   it('passes correct search query with >= intact', () => {

@@ -17,6 +17,7 @@ export interface FilterConfig {
   humanEngagementOnly: boolean;
   excludeAwaitingOthers: boolean;
   excludeAuthor: boolean;
+  excludeDrafts: boolean;
 }
 
 export interface TunerConfig {
@@ -63,6 +64,7 @@ export function loadConfig(configPath: string): TunerConfig {
       humanEngagementOnly: parsed.filters.humanEngagementOnly ?? true,
       excludeAwaitingOthers: parsed.filters.excludeAwaitingOthers ?? true,
       excludeAuthor: parsed.filters.excludeAuthor ?? true,
+      excludeDrafts: parsed.filters.excludeDrafts ?? true,
     },
   };
 }
