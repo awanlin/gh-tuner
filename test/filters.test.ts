@@ -133,6 +133,39 @@ describe('isUnrepliedMention', () => {
     expect(isUnrepliedMention(item, 'awanlin', '2026-07-03')).toBe(true);
   });
 
+  it('returns true when user commented but was mentioned again after', () => {
+    const item = makeItem({
+      comments: [
+        { author: 'someone', createdAt: '2026-07-04T10:00:00Z', body: '@awanlin thoughts?' },
+        { author: 'awanlin', createdAt: '2026-07-05T10:00:00Z', body: 'Looking into it' },
+        { author: 'someone', createdAt: '2026-07-06T10:00:00Z', body: '@awanlin any update?' },
+      ],
+    });
+    expect(isUnrepliedMention(item, 'awanlin', '2026-07-03')).toBe(true);
+  });
+
+  it('returns false when user replied after the latest mention', () => {
+    const item = makeItem({
+      comments: [
+        { author: 'someone', createdAt: '2026-07-04T10:00:00Z', body: '@awanlin thoughts?' },
+        { author: 'someone', createdAt: '2026-07-05T10:00:00Z', body: '@awanlin ping' },
+        { author: 'awanlin', createdAt: '2026-07-06T10:00:00Z', body: 'Done' },
+      ],
+    });
+    expect(isUnrepliedMention(item, 'awanlin', '2026-07-03')).toBe(false);
+  });
+
+  it('returns false when activity after user comment does not mention them', () => {
+    const item = makeItem({
+      comments: [
+        { author: 'someone', createdAt: '2026-07-04T10:00:00Z', body: '@awanlin thoughts?' },
+        { author: 'awanlin', createdAt: '2026-07-05T10:00:00Z', body: 'Looking into it' },
+        { author: 'someone', createdAt: '2026-07-06T10:00:00Z', body: 'Thanks, will test' },
+      ],
+    });
+    expect(isUnrepliedMention(item, 'awanlin', '2026-07-03')).toBe(false);
+  });
+
   it('returns true when there are no comments at all', () => {
     const item = makeItem({ comments: [] });
     expect(isUnrepliedMention(item, 'awanlin', '2026-07-03')).toBe(true);

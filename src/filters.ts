@@ -36,7 +36,17 @@ export function hasChangesRequestedByOthers(item: GitHubItem, user: string): boo
 
 export function isUnrepliedMention(item: GitHubItem, user: string, since: string): boolean {
   const sinceDate = new Date(since);
-  return !item.comments.some((c) => c.author === user && new Date(c.createdAt) > sinceDate);
+
+  const userComments = item.comments.filter(
+    (c) => c.author === user && new Date(c.createdAt) > sinceDate,
+  );
+
+  if (userComments.length === 0) return true;
+
+  const lastUserDate = new Date(userComments[userComments.length - 1].createdAt);
+  return item.comments.some(
+    (c) => c.author !== user && new Date(c.createdAt) > lastUserDate && c.body.includes(`@${user}`),
+  );
 }
 
 export function hasSecurityKeyword(item: GitHubItem, keywords: string[]): boolean {
