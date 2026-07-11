@@ -58,6 +58,7 @@ describe('generateMarkdown', () => {
       security: [],
       excludedAwaiting: 3,
       excludedSystem: 7,
+      excludedAuthor: 0,
       areaStats: [{ area: 'area:search', openIssues: 5, openPrs: 2, oldest: '31d' }],
       failedRepos: [],
     };
@@ -85,6 +86,7 @@ describe('generateMarkdown', () => {
       security: [],
       excludedAwaiting: 0,
       excludedSystem: 0,
+      excludedAuthor: 0,
       areaStats: [],
       failedRepos: [],
     };
@@ -116,6 +118,7 @@ describe('generateMarkdown', () => {
       security: [],
       excludedAwaiting: 0,
       excludedSystem: 0,
+      excludedAuthor: 0,
       areaStats: [],
       failedRepos: [],
     };
@@ -138,6 +141,7 @@ describe('generateMarkdown', () => {
       security: [],
       excludedAwaiting: 0,
       excludedSystem: 0,
+      excludedAuthor: 0,
       areaStats: [],
       failedRepos: [
         { name: 'backstage/backstage', mode: 'PRs' },
@@ -149,6 +153,48 @@ describe('generateMarkdown', () => {
     expect(md).toContain('⚠ Failed to fetch');
     expect(md).toContain('backstage/backstage (PRs)');
     expect(md).toContain('backstage/community-plugins (issues)');
+  });
+
+  it('shows own items excluded in footer when excludedAuthor > 0', () => {
+    const input: SummaryInput = {
+      mode: 'prs',
+      generatedDate: new Date('2026-07-11'),
+      sinceDate: new Date('2026-07-04'),
+      reposScanned: 5,
+      reposSkipped: 0,
+      newItems: [],
+      updatedItems: [],
+      security: [],
+      excludedAwaiting: 2,
+      excludedSystem: 1,
+      excludedAuthor: 4,
+      areaStats: [],
+      failedRepos: [],
+    };
+
+    const md = generateMarkdown(input);
+    expect(md).toContain('4 own PRs excluded');
+  });
+
+  it('omits own items from footer when excludedAuthor is 0', () => {
+    const input: SummaryInput = {
+      mode: 'issues',
+      generatedDate: new Date('2026-07-08'),
+      sinceDate: new Date('2026-07-03'),
+      reposScanned: 3,
+      reposSkipped: 0,
+      newItems: [],
+      updatedItems: [],
+      security: [],
+      excludedAwaiting: 0,
+      excludedSystem: 0,
+      excludedAuthor: 0,
+      areaStats: [],
+      failedRepos: [],
+    };
+
+    const md = generateMarkdown(input);
+    expect(md).not.toContain('own issues excluded');
   });
 
   it('omits failed repos warning when none failed', () => {
@@ -163,6 +209,7 @@ describe('generateMarkdown', () => {
       security: [],
       excludedAwaiting: 0,
       excludedSystem: 0,
+      excludedAuthor: 0,
       areaStats: [],
       failedRepos: [],
     };

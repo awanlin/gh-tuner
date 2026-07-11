@@ -141,7 +141,7 @@ describe('applyFilters', () => {
     const result = applyFilters([newItem, securityItem, systemOnlyItem], {
       since: '2026-07-03',
       user: 'awanlin',
-      filters: { humanEngagementOnly: true, excludeAwaitingOthers: true },
+      filters: { humanEngagementOnly: true, excludeAwaitingOthers: true, excludeAuthor: true },
       securityKeywords: ['CVE'],
     });
 

@@ -55,10 +55,50 @@ filters:
     expect(config.securityKeywords).toEqual(['CVE']);
     expect(config.filters.humanEngagementOnly).toBe(true);
     expect(config.filters.excludeAwaitingOthers).toBe(false);
+    expect(config.filters.excludeAuthor).toBe(true);
   });
 
   it('throws on missing config file', () => {
     expect(() => loadConfig('/nonexistent/gh-tuner.yaml')).toThrow();
+  });
+
+  it('defaults excludeAuthor to true when not specified', () => {
+    const path = writeTempConfig(`
+user: testuser
+startDate: 2026-07-07
+repos:
+  - name: org/repo1
+    scope: all
+schedule:
+  tuesday:
+    mode: issues
+    since: last-thursday
+filters:
+  humanEngagementOnly: true
+  excludeAwaitingOthers: true
+`);
+    const config = loadConfig(path);
+    expect(config.filters.excludeAuthor).toBe(true);
+  });
+
+  it('respects excludeAuthor when explicitly set to false', () => {
+    const path = writeTempConfig(`
+user: testuser
+startDate: 2026-07-07
+repos:
+  - name: org/repo1
+    scope: all
+schedule:
+  tuesday:
+    mode: issues
+    since: last-thursday
+filters:
+  humanEngagementOnly: true
+  excludeAwaitingOthers: true
+  excludeAuthor: false
+`);
+    const config = loadConfig(path);
+    expect(config.filters.excludeAuthor).toBe(false);
   });
 
   it('throws on missing required field', () => {

@@ -23,6 +23,7 @@ export interface SummaryInput {
   security: GitHubItem[];
   excludedAwaiting: number;
   excludedSystem: number;
+  excludedAuthor: number;
   areaStats: AreaStat[];
   failedRepos: FailedRepo[];
 }
@@ -126,9 +127,14 @@ export function generateMarkdown(input: SummaryInput): string {
   if (updatedSection) lines.push(updatedSection);
 
   lines.push('---');
-  lines.push(
-    `*${input.excludedAwaiting} ${itemLabel} excluded (awaiting others) · ${input.excludedSystem} system-only updates filtered*`,
-  );
+  const footerParts = [
+    `${input.excludedAwaiting} ${itemLabel} excluded (awaiting others)`,
+    `${input.excludedSystem} system-only updates filtered`,
+  ];
+  if (input.excludedAuthor > 0) {
+    footerParts.push(`${input.excludedAuthor} own ${itemLabel} excluded`);
+  }
+  lines.push(`*${footerParts.join(' · ')}*`);
 
   if (input.failedRepos.length > 0) {
     const failures = input.failedRepos.map((r) => `${r.name} (${r.mode})`).join(', ');
