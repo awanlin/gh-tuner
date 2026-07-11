@@ -21,10 +21,11 @@ export interface SummaryInput {
   newItems: GitHubItem[];
   updatedItems: GitHubItem[];
   security: GitHubItem[];
-  excludedAwaiting: number;
-  excludedSystem: number;
-  excludedAuthor: number;
-  excludedDrafts: number;
+  excludedAwaiting: GitHubItem[];
+  excludedSystem: GitHubItem[];
+  excludedAuthor: GitHubItem[];
+  excludedDrafts: GitHubItem[];
+  showExcluded: boolean;
   areaStats: AreaStat[];
   failedRepos: FailedRepo[];
 }
@@ -129,14 +130,14 @@ export function generateMarkdown(input: SummaryInput): string {
 
   lines.push('---');
   const footerParts = [
-    `${input.excludedAwaiting} ${itemLabel} excluded (awaiting others)`,
-    `${input.excludedSystem} system-only updates filtered`,
+    `${input.excludedAwaiting.length} ${itemLabel} excluded (awaiting others)`,
+    `${input.excludedSystem.length} system-only updates filtered`,
   ];
-  if (input.excludedAuthor > 0) {
-    footerParts.push(`${input.excludedAuthor} own ${itemLabel} excluded`);
+  if (input.excludedAuthor.length > 0) {
+    footerParts.push(`${input.excludedAuthor.length} own ${itemLabel} excluded`);
   }
-  if (input.excludedDrafts > 0) {
-    footerParts.push(`${input.excludedDrafts} drafts excluded`);
+  if (input.excludedDrafts.length > 0) {
+    footerParts.push(`${input.excludedDrafts.length} drafts excluded`);
   }
   lines.push(`*${footerParts.join(' · ')}*`);
 
@@ -154,6 +155,33 @@ export function generateMarkdown(input: SummaryInput): string {
     lines.push('|------|-------------|----------|--------|');
     for (const stat of input.areaStats) {
       lines.push(`| ${stat.area} | ${stat.openIssues} | ${stat.openPrs} | ${stat.oldest} |`);
+    }
+    lines.push('');
+  }
+
+  if (input.showExcluded) {
+    lines.push(renderExcludedSection(input));
+  }
+
+  return lines.join('\n');
+}
+
+function renderExcludedSection(input: SummaryInput): string {
+  const sections: { label: string; items: GitHubItem[] }[] = [
+    { label: 'Authored by you', items: input.excludedAuthor },
+    { label: 'Draft PRs', items: input.excludedDrafts },
+    { label: 'Awaiting others', items: input.excludedAwaiting },
+    { label: 'System-only updates', items: input.excludedSystem },
+  ];
+
+  const nonEmpty = sections.filter((s) => s.items.length > 0);
+  if (nonEmpty.length === 0) return '';
+
+  const lines: string[] = ['## Excluded Items', ''];
+  for (const section of nonEmpty) {
+    lines.push(`### ${section.label} (${section.items.length})`);
+    for (const item of section.items) {
+      lines.push(`- [#${item.number}](${item.url}) — ${item.title}`);
     }
     lines.push('');
   }

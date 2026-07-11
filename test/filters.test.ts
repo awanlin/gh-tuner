@@ -153,6 +153,7 @@ describe('applyFilters', () => {
 
     expect(result.security).toHaveLength(1);
     expect(result.security[0].number).toBe(2);
-    expect(result.excludedSystem).toBe(1);
+    expect(result.excludedSystem).toHaveLength(1);
+    expect(result.excludedSystem[0].number).toBe(3);
   });
 });
