@@ -3,6 +3,7 @@ import {
   isBot,
   hasHumanEngagement,
   isAwaitingOthers,
+  hasChangesRequestedByOthers,
   hasSecurityKeyword,
   applyFilters,
 } from '../src/filters.js';
@@ -20,6 +21,7 @@ function makeItem(overrides: Partial<GitHubItem> = {}): GitHubItem {
     state: 'open',
     isPr: false,
     isDraft: false,
+    reviews: [],
     comments: [],
     ...overrides,
   };
@@ -117,6 +119,80 @@ describe('hasSecurityKeyword', () => {
   });
 });
 
+describe('hasChangesRequestedByOthers', () => {
+  it('returns true when a human has requested changes', () => {
+    const item = makeItem({
+      author: 'contributor',
+      isPr: true,
+      reviews: [{ author: 'reviewer1', state: 'CHANGES_REQUESTED' }],
+    });
+    expect(hasChangesRequestedByOthers(item, 'awanlin')).toBe(true);
+  });
+
+  it('returns false when a human has only approved', () => {
+    const item = makeItem({
+      author: 'contributor',
+      isPr: true,
+      reviews: [{ author: 'reviewer1', state: 'APPROVED' }],
+    });
+    expect(hasChangesRequestedByOthers(item, 'awanlin')).toBe(false);
+  });
+
+  it('returns false when a human has only commented', () => {
+    const item = makeItem({
+      author: 'contributor',
+      isPr: true,
+      reviews: [{ author: 'reviewer1', state: 'COMMENTED' }],
+    });
+    expect(hasChangesRequestedByOthers(item, 'awanlin')).toBe(false);
+  });
+
+  it('returns false when only bots have requested changes', () => {
+    const item = makeItem({
+      author: 'contributor',
+      isPr: true,
+      reviews: [{ author: 'copilot-pull-request-reviewer', state: 'CHANGES_REQUESTED' }],
+    });
+    expect(hasChangesRequestedByOthers(item, 'awanlin')).toBe(false);
+  });
+
+  it('returns false when the PR author requested changes on their own PR', () => {
+    const item = makeItem({
+      author: 'contributor',
+      isPr: true,
+      reviews: [{ author: 'contributor', state: 'CHANGES_REQUESTED' }],
+    });
+    expect(hasChangesRequestedByOthers(item, 'awanlin')).toBe(false);
+  });
+
+  it('returns false when only the configured user requested changes', () => {
+    const item = makeItem({
+      author: 'contributor',
+      isPr: true,
+      reviews: [{ author: 'awanlin', state: 'CHANGES_REQUESTED' }],
+    });
+    expect(hasChangesRequestedByOthers(item, 'awanlin')).toBe(false);
+  });
+
+  it('returns false when there are no reviews', () => {
+    const item = makeItem({ author: 'contributor', isPr: true, reviews: [] });
+    expect(hasChangesRequestedByOthers(item, 'awanlin')).toBe(false);
+  });
+
+  it('returns true when mixed reviews include a qualifying changes request', () => {
+    const item = makeItem({
+      author: 'contributor',
+      isPr: true,
+      reviews: [
+        { author: 'copilot-pull-request-reviewer', state: 'COMMENTED' },
+        { author: 'awanlin', state: 'APPROVED' },
+        { author: 'other-maintainer', state: 'CHANGES_REQUESTED' },
+      ],
+    });
+    expect(hasChangesRequestedByOthers(item, 'awanlin')).toBe(true);
+  });
+});
+
 describe('applyFilters', () => {
   it('separates security items and filters system-only updates', () => {
     const newItem = makeItem({
@@ -147,6 +223,7 @@ describe('applyFilters', () => {
         excludeAwaitingOthers: true,
         excludeAuthor: true,
         excludeDrafts: true,
+        excludeChangesRequestedByOthers: true,
       },
       securityKeywords: ['CVE'],
     });

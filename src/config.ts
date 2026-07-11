@@ -18,6 +18,7 @@ export interface FilterConfig {
   excludeAwaitingOthers: boolean;
   excludeAuthor: boolean;
   excludeDrafts: boolean;
+  excludeChangesRequestedByOthers: boolean;
 }
 
 export interface TunerConfig {
@@ -65,6 +66,7 @@ export function loadConfig(configPath: string): TunerConfig {
       excludeAwaitingOthers: parsed.filters.excludeAwaitingOthers ?? true,
       excludeAuthor: parsed.filters.excludeAuthor ?? true,
       excludeDrafts: parsed.filters.excludeDrafts ?? true,
+      excludeChangesRequestedByOthers: parsed.filters.excludeChangesRequestedByOthers ?? true,
     },
   };
 }

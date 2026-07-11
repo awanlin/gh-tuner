@@ -58,3 +58,4 @@ filters:
   excludeAwaitingOthers: true
   excludeAuthor: true
   excludeDrafts: true
+  excludeChangesRequestedByOthers: true

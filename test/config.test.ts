@@ -57,6 +57,7 @@ filters:
     expect(config.filters.excludeAwaitingOthers).toBe(false);
     expect(config.filters.excludeAuthor).toBe(true);
     expect(config.filters.excludeDrafts).toBe(true);
+    expect(config.filters.excludeChangesRequestedByOthers).toBe(true);
   });
 
   it('throws on missing config file', () => {
@@ -81,6 +82,7 @@ filters:
     const config = loadConfig(path);
     expect(config.filters.excludeAuthor).toBe(true);
     expect(config.filters.excludeDrafts).toBe(true);
+    expect(config.filters.excludeChangesRequestedByOthers).toBe(true);
   });
 
   it('respects excludeAuthor when explicitly set to false', () => {
