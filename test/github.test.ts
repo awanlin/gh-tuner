@@ -148,6 +148,7 @@ describe('fetchIssues', () => {
       updatedAt: '2026-07-06T12:00:00Z',
       labels: ['bug', 'area:search'],
       author: 'contributor',
+      assignees: [],
       state: 'OPEN',
       isPr: false,
       isDraft: false,

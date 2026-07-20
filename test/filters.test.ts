@@ -19,6 +19,7 @@ function makeItem(overrides: Partial<GitHubItem> = {}): GitHubItem {
     updatedAt: '2026-07-05T00:00:00Z',
     labels: [],
     author: 'someuser',
+    assignees: [],
     state: 'open',
     isPr: false,
     isDraft: false,
@@ -294,6 +295,7 @@ describe('applyFilters', () => {
         excludeAuthor: true,
         excludeDrafts: true,
         excludeChangesRequestedByOthers: true,
+        excludeAssigned: false,
       },
       securityKeywords: ['CVE'],
     });

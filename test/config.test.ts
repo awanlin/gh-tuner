@@ -83,6 +83,7 @@ filters:
     expect(config.filters.excludeAuthor).toBe(true);
     expect(config.filters.excludeDrafts).toBe(true);
     expect(config.filters.excludeChangesRequestedByOthers).toBe(true);
+    expect(config.filters.excludeAssigned).toBe(false);
   });
 
   it('respects excludeAuthor when explicitly set to false', () => {
