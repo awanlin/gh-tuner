@@ -90,6 +90,7 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
   const allExcludedAuthor: GitHubItem[] = [];
   const allExcludedDrafts: GitHubItem[] = [];
   const allExcludedChangesRequested: GitHubItem[] = [];
+  const allExcludedAssigned: GitHubItem[] = [];
 
   for (const repo of includedRepos) {
     console.log(chalk.gray(`  Fetching ${repo.name}...`));
@@ -142,6 +143,16 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
       items = items.filter((item) => {
         if (item.isPr && hasChangesRequestedByOthers(item, cfg.user)) {
           allExcludedChangesRequested.push(item);
+          return false;
+        }
+        return true;
+      });
+    }
+
+    if (cfg.filters.excludeAssigned) {
+      items = items.filter((item) => {
+        if (item.assignees.length > 0) {
+          allExcludedAssigned.push(item);
           return false;
         }
         return true;
@@ -226,6 +237,7 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
     excludedAuthor: allExcludedAuthor,
     excludedDrafts: allExcludedDrafts,
     excludedChangesRequested: allExcludedChangesRequested,
+    excludedAssigned: allExcludedAssigned,
     mentioned: allMentioned,
     showExcluded: opts.showExcluded ?? false,
     areaStats,

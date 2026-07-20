@@ -20,6 +20,7 @@ export interface GitHubItem {
   updatedAt: string;
   labels: string[];
   author: string;
+  assignees: string[];
   state: string;
   isPr: boolean;
   isDraft: boolean;
@@ -80,14 +81,14 @@ export function ghExec(args: string[]): string {
   return '';
 }
 
-const ISSUE_FIELDS = 'number,title,url,createdAt,updatedAt,labels,author,state';
+const ISSUE_FIELDS = 'number,title,url,createdAt,updatedAt,labels,author,assignees,state';
 // TODO: Consider adding statusCheckRollup back to show CI pass/fail status
 // per PR. Dropped because it causes 504 timeouts on large repos (the field
 // triggers expensive cross-service lookups in GitHub's GraphQL API) and the
 // data wasn't being surfaced in the output. When revisiting, fetch only the
 // rolled-up state (not individual contexts) — adds ~1s vs ~4.7s with contexts.
 const PR_FIELDS =
-  'number,title,url,createdAt,updatedAt,labels,author,state,isDraft,reviews,reviewDecision';
+  'number,title,url,createdAt,updatedAt,labels,author,assignees,state,isDraft,reviews,reviewDecision';
 
 interface GhLabel {
   name: string;
@@ -101,6 +102,7 @@ interface GhItem {
   updatedAt: string;
   labels: GhLabel[];
   author: { login: string } | null;
+  assignees?: { login: string }[];
   state: string;
   isDraft?: boolean;
   reviews?: { author: { login: string } | null; state: string }[];
@@ -121,6 +123,7 @@ function mapItem(item: GhItem, isPr: boolean): GitHubItem {
     updatedAt: item.updatedAt,
     labels: (item.labels ?? []).map((l) => l.name),
     author: item.author?.login ?? 'unknown',
+    assignees: (item.assignees ?? []).map((a) => a.login),
     state: item.state,
     isPr,
     isDraft: item.isDraft ?? false,
