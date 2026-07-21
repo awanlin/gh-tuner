@@ -151,7 +151,8 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
 
     if (cfg.filters.excludeAssigned) {
       items = items.filter((item) => {
-        if (item.assignees.length > 0) {
+        const assignedToOthers = item.assignees.some((a) => a !== cfg.user);
+        if (assignedToOthers) {
           allExcludedAssigned.push(item);
           return false;
         }
