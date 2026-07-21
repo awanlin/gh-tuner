@@ -92,6 +92,10 @@ securityKeywords:
 filters:
   humanEngagementOnly: true # only surface human comments, not system activity
   excludeAwaitingOthers: true # skip items where you're the last commenter
+  excludeAuthor: true # skip items you authored
+  excludeDrafts: true # skip draft PRs
+  excludeChangesRequestedByOthers: true # skip PRs where another reviewer already requested changes
+  excludeAssigned: true # skip items that already have an assignee
 ```
 
 ## Requirements
