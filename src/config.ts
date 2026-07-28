@@ -1,11 +1,18 @@
 import { readFileSync } from 'node:fs';
 import { parse } from 'yaml';
 
+export type ScopeValue = 'all' | 'filtered';
+
 export interface RepoConfig {
   name: string;
-  scope: 'all' | 'filtered';
+  scope: ScopeValue | { issues: ScopeValue; prs: ScopeValue };
   cadence?: 'weekly' | 'biweekly' | 'monthly';
   labels?: string[];
+}
+
+export function getScope(repo: RepoConfig, mode: 'issues' | 'prs'): ScopeValue {
+  if (typeof repo.scope === 'string') return repo.scope;
+  return repo.scope[mode];
 }
 
 export interface ScheduleEntry {
@@ -31,6 +38,34 @@ export interface TunerConfig {
   filters: FilterConfig;
 }
 
+function validateScope(
+  scope: unknown,
+  repoName: string,
+): ScopeValue | { issues: ScopeValue; prs: ScopeValue } {
+  const validValues = ['all', 'filtered'];
+  if (typeof scope === 'string') {
+    if (!validValues.includes(scope)) {
+      throw new Error(`Invalid scope "${scope}" for repo ${repoName}. Must be "all" or "filtered"`);
+    }
+    return scope as ScopeValue;
+  }
+  if (typeof scope === 'object' && scope !== null) {
+    const obj = scope as Record<string, unknown>;
+    if (!('issues' in obj) || !('prs' in obj)) {
+      throw new Error(`Object scope for repo ${repoName} must have both "issues" and "prs" keys`);
+    }
+    if (!validValues.includes(obj.issues as string) || !validValues.includes(obj.prs as string)) {
+      throw new Error(
+        `Invalid scope values for repo ${repoName}. Each must be "all" or "filtered"`,
+      );
+    }
+    return { issues: obj.issues as ScopeValue, prs: obj.prs as ScopeValue };
+  }
+  throw new Error(
+    `Invalid scope for repo ${repoName}. Must be a string or object with issues/prs keys`,
+  );
+}
+
 export function loadConfig(configPath: string): TunerConfig {
   const raw = readFileSync(configPath, 'utf-8');
   const parsed = parse(raw);
@@ -54,8 +89,8 @@ export function loadConfig(configPath: string): TunerConfig {
   return {
     user: parsed.user,
     startDate: parsed.startDate,
-    repos: parsed.repos.map((r: Partial<RepoConfig>) => {
-      const repo: RepoConfig = { name: r.name!, scope: r.scope! };
+    repos: parsed.repos.map((r: Partial<RepoConfig> & { name: string; scope: unknown }) => {
+      const repo: RepoConfig = { name: r.name, scope: validateScope(r.scope, r.name) };
       if (r.cadence) repo.cadence = r.cadence;
       if (r.labels) repo.labels = r.labels;
       return repo;

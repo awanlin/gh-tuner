@@ -6,7 +6,7 @@ import chalk from 'chalk';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(resolve(__dirname, '..', 'package.json'), 'utf-8'));
-import { loadConfig } from './config.js';
+import { loadConfig, getScope } from './config.js';
 import { getScheduleForDay, resolveSince, isRepoIncluded } from './schedule.js';
 import {
   fetchIssues,
@@ -110,13 +110,15 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
       }
     }
 
-    if (repo.scope === 'filtered' && repo.labels) {
-      items = items.filter(
-        (item) =>
+    if (repo.labels) {
+      items = items.filter((item) => {
+        if (getScope(repo, item.isPr ? 'prs' : 'issues') !== 'filtered') return true;
+        return (
           item.labels.some((l) => repo.labels!.includes(l)) ||
           item.author === cfg.user ||
-          item.labels.includes(`involves:${cfg.user}`),
-      );
+          item.labels.includes(`involves:${cfg.user}`)
+        );
+      });
     }
 
     if (cfg.filters.excludeAuthor) {

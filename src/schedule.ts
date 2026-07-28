@@ -48,7 +48,11 @@ export function isRepoIncluded(
   startDate: string,
   today: Date = new Date(),
 ): boolean {
-  if (repo.scope === 'filtered') return true;
+  const hasFiltered =
+    typeof repo.scope === 'string'
+      ? repo.scope === 'filtered'
+      : repo.scope.issues === 'filtered' || repo.scope.prs === 'filtered';
+  if (hasFiltered) return true;
 
   const cadence = repo.cadence ?? 'weekly';
   if (cadence === 'weekly') return true;
