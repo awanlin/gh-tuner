@@ -18,7 +18,9 @@ repos:
     scope: all
     cadence: monthly
   - name: backstage/backstage
-    scope: filtered
+    scope:
+      issues: all
+      prs: filtered
     labels:
       - area:devtools
       - area:search
@@ -27,7 +29,9 @@ repos:
       - area:documentation
       - area:microsite
   - name: backstage/community-plugins
-    scope: filtered
+    scope:
+      issues: all
+      prs: filtered
     labels:
       - workspace/azure-devops
       - workspace/linguist

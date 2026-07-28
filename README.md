@@ -68,10 +68,16 @@ repos:
     scope: all # fetch all issues/PRs
     cadence: weekly # weekly | biweekly | monthly
   - name: org/other-repo
-    scope: filtered # only items involving you + label matches
+    scope: filtered # only items involving you + label matches (string form)
     labels:
       - area:search
       - area:docs
+  - name: org/big-repo
+    scope: # per-mode scope (object form)
+      issues: all # see all new issues
+      prs: filtered # label-filter PRs
+    labels:
+      - area:search
 
 schedule:
   tuesday:
