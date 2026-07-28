@@ -80,4 +80,26 @@ describe('isRepoIncluded', () => {
     expect(isRepoIncluded(repo, startDate, new Date('2026-07-15'))).toBe(true);
     expect(isRepoIncluded(repo, startDate, new Date('2026-08-15'))).toBe(true);
   });
+
+  it('always includes repos with per-mode scope containing filtered', () => {
+    const repo = {
+      name: 'org/repo',
+      scope: { issues: 'all' as const, prs: 'filtered' as const },
+      labels: ['area:search'],
+    };
+    expect(isRepoIncluded(repo, startDate, new Date('2026-07-08'))).toBe(true);
+    expect(isRepoIncluded(repo, startDate, new Date('2026-07-15'))).toBe(true);
+  });
+
+  it('applies cadence to repos with per-mode scope all/all', () => {
+    const repo = {
+      name: 'org/repo',
+      scope: { issues: 'all' as const, prs: 'all' as const },
+      cadence: 'biweekly' as const,
+    };
+    // Week 0 — included
+    expect(isRepoIncluded(repo, startDate, new Date('2026-07-08'))).toBe(true);
+    // Week 1 — excluded
+    expect(isRepoIncluded(repo, startDate, new Date('2026-07-15'))).toBe(false);
+  });
 });
