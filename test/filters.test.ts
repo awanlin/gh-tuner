@@ -4,6 +4,7 @@ import {
   hasHumanEngagement,
   isAwaitingOthers,
   hasChangesRequestedByOthers,
+  needsReReview,
   isUnrepliedMention,
   hasSecurityKeyword,
   applyFilters,
@@ -23,6 +24,7 @@ function makeItem(overrides: Partial<GitHubItem> = {}): GitHubItem {
     state: 'open',
     isPr: false,
     isDraft: false,
+    headRefOid: '',
     reviews: [],
     comments: [],
     ...overrides,
@@ -264,6 +266,62 @@ describe('hasChangesRequestedByOthers', () => {
   });
 });
 
+describe('needsReReview', () => {
+  it('returns true when user requested changes and PR head has moved', () => {
+    const item = makeItem({
+      isPr: true,
+      headRefOid: 'new-commit-sha',
+      reviews: [{ author: 'awanlin', state: 'CHANGES_REQUESTED', commitOid: 'old-commit-sha' }],
+    });
+    expect(needsReReview(item, 'awanlin')).toBe(true);
+  });
+
+  it('returns false when PR head has not moved since the review', () => {
+    const item = makeItem({
+      isPr: true,
+      headRefOid: 'same-sha',
+      reviews: [{ author: 'awanlin', state: 'CHANGES_REQUESTED', commitOid: 'same-sha' }],
+    });
+    expect(needsReReview(item, 'awanlin')).toBe(false);
+  });
+
+  it('returns false when changes were requested by someone else', () => {
+    const item = makeItem({
+      isPr: true,
+      headRefOid: 'new-commit-sha',
+      reviews: [{ author: 'other-reviewer', state: 'CHANGES_REQUESTED', commitOid: 'old-sha' }],
+    });
+    expect(needsReReview(item, 'awanlin')).toBe(false);
+  });
+
+  it('returns false for issues', () => {
+    const item = makeItem({
+      isPr: false,
+      headRefOid: 'new-sha',
+      reviews: [{ author: 'awanlin', state: 'CHANGES_REQUESTED', commitOid: 'old-sha' }],
+    });
+    expect(needsReReview(item, 'awanlin')).toBe(false);
+  });
+
+  it('returns false when review state is not CHANGES_REQUESTED', () => {
+    const item = makeItem({
+      isPr: true,
+      headRefOid: 'new-sha',
+      reviews: [{ author: 'awanlin', state: 'APPROVED', commitOid: 'old-sha' }],
+    });
+    expect(needsReReview(item, 'awanlin')).toBe(false);
+  });
+
+  it('returns false when commitOid is empty', () => {
+    const item = makeItem({
+      isPr: true,
+      headRefOid: 'new-sha',
+      reviews: [{ author: 'awanlin', state: 'CHANGES_REQUESTED', commitOid: '' }],
+    });
+    expect(needsReReview(item, 'awanlin')).toBe(false);
+  });
+});
+
 describe('applyFilters', () => {
   it('separates security items and filters system-only updates', () => {
     const newItem = makeItem({
@@ -304,5 +362,70 @@ describe('applyFilters', () => {
     expect(result.security[0].number).toBe(2);
     expect(result.excludedSystem).toHaveLength(1);
     expect(result.excludedSystem[0].number).toBe(3);
+  });
+
+  it('rescues awaiting-others PRs that need re-review', () => {
+    const reReviewPr = makeItem({
+      number: 10,
+      title: 'PR needing re-review',
+      createdAt: '2026-06-01T00:00:00Z',
+      isPr: true,
+      headRefOid: 'new-commit-sha',
+      reviews: [{ author: 'awanlin', state: 'CHANGES_REQUESTED', commitOid: 'old-commit-sha' }],
+      comments: [
+        { author: 'contributor', createdAt: '2026-07-04T10:00:00Z', body: 'Initial submission' },
+        { author: 'awanlin', createdAt: '2026-07-05T10:00:00Z', body: 'Please fix X' },
+      ],
+    });
+
+    const result = applyFilters([reReviewPr], {
+      since: '2026-07-03',
+      user: 'awanlin',
+      filters: {
+        humanEngagementOnly: true,
+        excludeAwaitingOthers: true,
+        excludeAuthor: true,
+        excludeDrafts: true,
+        excludeChangesRequestedByOthers: true,
+        excludeAssigned: false,
+      },
+      securityKeywords: [],
+    });
+
+    expect(result.reReview).toHaveLength(1);
+    expect(result.reReview[0].number).toBe(10);
+    expect(result.excludedAwaiting).toHaveLength(0);
+  });
+
+  it('excludes awaiting-others PRs when head has not moved', () => {
+    const staleReviewPr = makeItem({
+      number: 11,
+      title: 'PR still awaiting changes',
+      createdAt: '2026-06-01T00:00:00Z',
+      isPr: true,
+      headRefOid: 'same-sha',
+      reviews: [{ author: 'awanlin', state: 'CHANGES_REQUESTED', commitOid: 'same-sha' }],
+      comments: [
+        { author: 'contributor', createdAt: '2026-07-04T10:00:00Z', body: 'Initial submission' },
+        { author: 'awanlin', createdAt: '2026-07-05T10:00:00Z', body: 'Please fix X' },
+      ],
+    });
+
+    const result = applyFilters([staleReviewPr], {
+      since: '2026-07-03',
+      user: 'awanlin',
+      filters: {
+        humanEngagementOnly: true,
+        excludeAwaitingOthers: true,
+        excludeAuthor: true,
+        excludeDrafts: true,
+        excludeChangesRequestedByOthers: true,
+        excludeAssigned: false,
+      },
+      securityKeywords: [],
+    });
+
+    expect(result.reReview).toHaveLength(0);
+    expect(result.excludedAwaiting).toHaveLength(1);
   });
 });

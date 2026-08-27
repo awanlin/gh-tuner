@@ -152,6 +152,7 @@ describe('fetchIssues', () => {
       state: 'OPEN',
       isPr: false,
       isDraft: false,
+      headRefOid: '',
       reviews: [],
       comments: [],
     });
@@ -291,9 +292,14 @@ describe('fetchPrs', () => {
         labels: [],
         author: { login: 'contributor' },
         state: 'OPEN',
+        headRefOid: 'abc123',
         reviews: [
-          { author: { login: 'reviewer1' }, state: 'APPROVED' },
-          { author: { login: 'copilot-pull-request-reviewer' }, state: 'COMMENTED' },
+          { author: { login: 'reviewer1' }, state: 'APPROVED', commit: { oid: 'abc123' } },
+          {
+            author: { login: 'copilot-pull-request-reviewer' },
+            state: 'COMMENTED',
+            commit: { oid: 'abc123' },
+          },
         ],
         reviewDecision: 'APPROVED',
       },
@@ -302,9 +308,10 @@ describe('fetchPrs', () => {
 
     const items = fetchPrs('org/repo', '2026-07-03');
 
+    expect(items[0].headRefOid).toBe('abc123');
     expect(items[0].reviews).toEqual([
-      { author: 'reviewer1', state: 'APPROVED' },
-      { author: 'copilot-pull-request-reviewer', state: 'COMMENTED' },
+      { author: 'reviewer1', state: 'APPROVED', commitOid: 'abc123' },
+      { author: 'copilot-pull-request-reviewer', state: 'COMMENTED', commitOid: 'abc123' },
     ]);
   });
 

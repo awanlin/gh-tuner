@@ -13,6 +13,7 @@ function makeItems(count: number): GitHubItem[] {
     author: 'someone',
     state: 'open',
     isPr: false,
+    headRefOid: '',
     comments: [],
   }));
 }

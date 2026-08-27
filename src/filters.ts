@@ -34,6 +34,17 @@ export function hasChangesRequestedByOthers(item: GitHubItem, user: string): boo
   );
 }
 
+export function needsReReview(item: GitHubItem, user: string): boolean {
+  if (!item.isPr || !item.headRefOid) return false;
+  return item.reviews.some(
+    (r) =>
+      r.state === 'CHANGES_REQUESTED' &&
+      r.author === user &&
+      r.commitOid !== '' &&
+      r.commitOid !== item.headRefOid,
+  );
+}
+
 export function isUnrepliedMention(item: GitHubItem, user: string, since: string): boolean {
   const sinceDate = new Date(since);
 
@@ -57,6 +68,7 @@ export function hasSecurityKeyword(item: GitHubItem, keywords: string[]): boolea
 export interface FilterResult {
   items: GitHubItem[];
   security: GitHubItem[];
+  reReview: GitHubItem[];
   excludedAwaiting: GitHubItem[];
   excludedSystem: GitHubItem[];
 }
@@ -72,6 +84,7 @@ export function applyFilters(
 ): FilterResult {
   const security: GitHubItem[] = [];
   const kept: GitHubItem[] = [];
+  const reReview: GitHubItem[] = [];
   const excludedAwaiting: GitHubItem[] = [];
   const excludedSystem: GitHubItem[] = [];
 
@@ -94,12 +107,16 @@ export function applyFilters(
     }
 
     if (opts.filters.excludeAwaitingOthers && isAwaitingOthers(item, opts.user)) {
-      excludedAwaiting.push(item);
+      if (needsReReview(item, opts.user)) {
+        reReview.push(item);
+      } else {
+        excludedAwaiting.push(item);
+      }
       continue;
     }
 
     if (!isSecurity) kept.push(item);
   }
 
-  return { items: kept, security, excludedAwaiting, excludedSystem };
+  return { items: kept, security, reReview, excludedAwaiting, excludedSystem };
 }
