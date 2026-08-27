@@ -21,6 +21,7 @@ export interface SummaryInput {
   newItems: GitHubItem[];
   updatedItems: GitHubItem[];
   security: GitHubItem[];
+  reReview: GitHubItem[];
   excludedAwaiting: GitHubItem[];
   excludedSystem: GitHubItem[];
   excludedAuthor: GitHubItem[];
@@ -116,6 +117,13 @@ export function generateMarkdown(input: SummaryInput): string {
     }
     lines.push('');
   }
+
+  const reReviewSection = renderSection(
+    'Needs Re-Review — Changes Addressed',
+    input.reReview,
+    input.generatedDate,
+  );
+  if (reReviewSection) lines.push(reReviewSection);
 
   const newLabel =
     input.mode === 'prs' ? 'New PRs' : input.mode === 'all' ? 'New Items' : 'New Issues';

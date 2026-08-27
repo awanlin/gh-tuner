@@ -90,6 +90,7 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
   const allExcludedAuthor: GitHubItem[] = [];
   const allExcludedDrafts: GitHubItem[] = [];
   const allExcludedChangesRequested: GitHubItem[] = [];
+  const allReReview: GitHubItem[] = [];
   const allExcludedAssigned: GitHubItem[] = [];
 
   for (const repo of includedRepos) {
@@ -186,6 +187,7 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
 
     allUpdatedItems.push(...filtered.items);
     allSecurity.push(...filtered.security);
+    allReReview.push(...filtered.reReview);
     allExcludedAwaiting.push(...filtered.excludedAwaiting);
     allExcludedSystem.push(...filtered.excludedSystem);
   }
@@ -196,6 +198,7 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
       ...allNewItems,
       ...allUpdatedItems,
       ...allSecurity,
+      ...allReReview,
       ...allExcludedAwaiting,
       ...allExcludedSystem,
       ...allExcludedAuthor,
@@ -235,6 +238,7 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
     newItems: allNewItems,
     updatedItems: allUpdatedItems,
     security: allSecurity,
+    reReview: allReReview,
     excludedAwaiting: allExcludedAwaiting,
     excludedSystem: allExcludedSystem,
     excludedAuthor: allExcludedAuthor,
@@ -257,7 +261,7 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
   }
 
   if (opts.open) {
-    const allItems = [...allSecurity, ...allNewItems, ...allUpdatedItems];
+    const allItems = [...allSecurity, ...allReReview, ...allNewItems, ...allUpdatedItems];
     const unique = [...new Map(allItems.map((i) => [i.url, i])).values()];
     await openItems(unique, { openAll: opts.openAll });
   }

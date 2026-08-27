@@ -10,6 +10,7 @@ export interface GitHubComment {
 export interface GitHubReview {
   author: string;
   state: string;
+  commitOid: string;
 }
 
 export interface GitHubItem {
@@ -24,6 +25,7 @@ export interface GitHubItem {
   state: string;
   isPr: boolean;
   isDraft: boolean;
+  headRefOid: string;
   reviews: GitHubReview[];
   comments: GitHubComment[];
 }
@@ -88,7 +90,7 @@ const ISSUE_FIELDS = 'number,title,url,createdAt,updatedAt,labels,author,assigne
 // data wasn't being surfaced in the output. When revisiting, fetch only the
 // rolled-up state (not individual contexts) — adds ~1s vs ~4.7s with contexts.
 const PR_FIELDS =
-  'number,title,url,createdAt,updatedAt,labels,author,assignees,state,isDraft,reviews,reviewDecision';
+  'number,title,url,createdAt,updatedAt,labels,author,assignees,state,isDraft,headRefOid,reviews,reviewDecision';
 
 interface GhLabel {
   name: string;
@@ -105,7 +107,8 @@ interface GhItem {
   assignees?: { login: string }[];
   state: string;
   isDraft?: boolean;
-  reviews?: { author: { login: string } | null; state: string }[];
+  headRefOid?: string;
+  reviews?: { author: { login: string } | null; state: string; commit?: { oid: string } }[];
 }
 
 interface GhComment {
@@ -127,9 +130,11 @@ function mapItem(item: GhItem, isPr: boolean): GitHubItem {
     state: item.state,
     isPr,
     isDraft: item.isDraft ?? false,
+    headRefOid: item.headRefOid ?? '',
     reviews: (item.reviews ?? []).map((r) => ({
       author: r.author?.login ?? 'unknown',
       state: r.state,
+      commitOid: r.commit?.oid ?? '',
     })),
     comments: [],
   };
