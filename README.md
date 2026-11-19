@@ -38,6 +38,9 @@ npx gh-tuner@latest issues --no-open
 # Force open all items even if there are more than 50
 npx gh-tuner@latest issues --open-all
 
+# Preview without recording this run as the start of the next delta
+npx gh-tuner@latest issues --no-save-state
+
 # Use a custom config file
 npx gh-tuner@latest issues --config ./my-config.yaml
 
@@ -45,6 +48,16 @@ npx gh-tuner@latest issues --config ./my-config.yaml
 npx gh-tuner@latest --help
 npx gh-tuner@latest issues --help
 ```
+
+### Delta window
+
+After each successful run, gh-tuner saves the exact run time per mode (`issues`, `prs`) in `.gh-tuner-state.json` next to the config file. The next run starts its delta from that timestamp, so items covered by the previous run don't come back. The order of precedence is:
+
+1. `--since`, if given
+2. The saved timestamp from the last run (for `all`, the earlier of the two modes)
+3. The schedule's `since: last-<day>` (midnight UTC of that day)
+
+State is not saved when `--no-save-state` is passed or when any repo failed to fetch.
 
 ## Install from source
 

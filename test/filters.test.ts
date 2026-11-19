@@ -428,4 +428,110 @@ describe('applyFilters', () => {
     expect(result.reReview).toHaveLength(0);
     expect(result.excludedAwaiting).toHaveLength(1);
   });
+
+  describe('excludeAwaitingOthers applies to every section', () => {
+    const opts = {
+      since: '2026-11-17T19:45:00Z',
+      user: 'awanlin',
+      filters: {
+        humanEngagementOnly: true,
+        excludeAwaitingOthers: true,
+        excludeAuthor: true,
+        excludeDrafts: true,
+        excludeChangesRequestedByOthers: true,
+        excludeAssigned: false,
+      },
+      securityKeywords: ['security'],
+    };
+
+    it('excludes an updated security item where the user commented last', () => {
+      const item = makeItem({
+        number: 34728,
+        title: 'Storing tokens in localStorage is a security anti-pattern',
+        createdAt: '2026-10-01T00:00:00Z',
+        updatedAt: '2026-11-18T00:00:00Z',
+        comments: [
+          { author: 'reporter', createdAt: '2026-10-01T00:00:00Z', body: 'Report' },
+          { author: 'awanlin', createdAt: '2026-10-27T00:00:00Z', body: 'Thoughts' },
+          { author: 'other', createdAt: '2026-11-18T00:00:00Z', body: 'Same here' },
+          { author: 'awanlin', createdAt: '2026-11-18T12:00:00Z', body: 'Follow-up' },
+          { author: 'github-actions', createdAt: '2026-11-18T13:00:00Z', body: 'bot' },
+        ],
+      });
+      const result = applyFilters([item], opts);
+      expect(result.security).toHaveLength(0);
+      expect(result.excludedAwaiting.map((i) => i.number)).toEqual([34728]);
+    });
+
+    it('excludes a new security item where the user commented last', () => {
+      const item = makeItem({
+        number: 2,
+        title: 'security problem',
+        createdAt: '2026-11-18T00:00:00Z',
+        comments: [{ author: 'awanlin', createdAt: '2026-11-18T01:00:00Z', body: 'Looking' }],
+      });
+      const result = applyFilters([item], opts);
+      expect(result.security).toHaveLength(0);
+      expect(result.newItems).toHaveLength(0);
+      expect(result.excludedAwaiting).toHaveLength(1);
+    });
+
+    it('keeps a security item when someone else commented last', () => {
+      const item = makeItem({
+        number: 3,
+        title: 'security problem',
+        createdAt: '2026-10-01T00:00:00Z',
+        comments: [
+          { author: 'awanlin', createdAt: '2026-11-18T00:00:00Z', body: 'Question?' },
+          { author: 'reporter', createdAt: '2026-11-18T05:00:00Z', body: 'Answer' },
+        ],
+      });
+      const result = applyFilters([item], opts);
+      expect(result.security.map((i) => i.number)).toEqual([3]);
+      expect(result.excludedAwaiting).toHaveLength(0);
+    });
+
+    it('excludes a new item the user already replied to', () => {
+      const item = makeItem({
+        number: 36913,
+        title: 'Bug in catalog',
+        createdAt: '2026-11-18T00:39:00Z',
+        comments: [
+          { author: 'awanlin', createdAt: '2026-11-18T19:40:00Z', body: 'Fixed in #36924' },
+        ],
+      });
+      const result = applyFilters([item], opts);
+      expect(result.newItems).toHaveLength(0);
+      expect(result.excludedAwaiting.map((i) => i.number)).toEqual([36913]);
+    });
+
+    it('keeps a new item with no comments', () => {
+      const item = makeItem({ number: 4, createdAt: '2026-11-18T00:00:00Z' });
+      const result = applyFilters([item], opts);
+      expect(result.newItems.map((i) => i.number)).toEqual([4]);
+    });
+
+    it('excludes an updated item where the user commented last', () => {
+      const item = makeItem({
+        number: 5,
+        createdAt: '2026-10-01T00:00:00Z',
+        comments: [{ author: 'awanlin', createdAt: '2026-11-18T00:00:00Z', body: 'Ping' }],
+      });
+      const result = applyFilters([item], opts);
+      expect(result.items).toHaveLength(0);
+      expect(result.excludedAwaiting).toHaveLength(1);
+    });
+
+    it('treats the exact since timestamp as the new/updated boundary', () => {
+      const before = makeItem({
+        number: 6,
+        createdAt: '2026-11-17T00:39:00Z',
+        comments: [{ author: 'other', createdAt: '2026-11-18T00:00:00Z', body: 'Hi' }],
+      });
+      const after = makeItem({ number: 7, createdAt: '2026-11-17T20:00:00Z' });
+      const result = applyFilters([before, after], opts);
+      expect(result.newItems.map((i) => i.number)).toEqual([7]);
+      expect(result.items.map((i) => i.number)).toEqual([6]);
+    });
+  });
 });

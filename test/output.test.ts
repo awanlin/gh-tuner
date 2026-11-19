@@ -443,3 +443,30 @@ describe('generateMarkdown', () => {
     expect(md).not.toContain('## Excluded Items');
   });
 });
+
+describe('Delta since header', () => {
+  it('shows the exact timestamp', () => {
+    const md = generateMarkdown({
+      mode: 'issues',
+      generatedDate: new Date('2026-11-19T09:00:00Z'),
+      sinceDate: new Date('2026-11-17T19:45:30Z'),
+      reposScanned: 1,
+      reposSkipped: 0,
+      newItems: [],
+      updatedItems: [],
+      security: [],
+      reReview: [],
+      excludedAwaiting: [],
+      excludedSystem: [],
+      excludedAuthor: [],
+      excludedDrafts: [],
+      excludedChangesRequested: [],
+      excludedAssigned: [],
+      mentioned: [],
+      showExcluded: false,
+      areaStats: [],
+      failedRepos: [],
+    });
+    expect(md).toContain('**Delta since:** 2026-11-17 19:45 UTC (Tuesday)');
+  });
+});
