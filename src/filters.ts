@@ -66,6 +66,7 @@ export function hasSecurityKeyword(item: GitHubItem, keywords: string[]): boolea
 }
 
 export interface FilterResult {
+  newItems: GitHubItem[];
   items: GitHubItem[];
   security: GitHubItem[];
   reReview: GitHubItem[];
@@ -73,6 +74,12 @@ export interface FilterResult {
   excludedSystem: GitHubItem[];
 }
 
+/**
+ * Sorts items into sections. Items created after `since` are "new"; the rest
+ * are "updated". The awaiting-others check applies to every section (new,
+ * updated and security) so items where the user made the last human comment
+ * are left out wherever they would have been listed.
+ */
 export function applyFilters(
   items: GitHubItem[],
   opts: {
@@ -82,26 +89,18 @@ export function applyFilters(
     securityKeywords: string[];
   },
 ): FilterResult {
+  const newItems: GitHubItem[] = [];
   const security: GitHubItem[] = [];
   const kept: GitHubItem[] = [];
   const reReview: GitHubItem[] = [];
   const excludedAwaiting: GitHubItem[] = [];
   const excludedSystem: GitHubItem[] = [];
+  const sinceDate = new Date(opts.since);
 
   for (const item of items) {
-    const isSecurity = hasSecurityKeyword(item, opts.securityKeywords);
-    if (isSecurity) {
-      security.push(item);
-    }
+    const isNew = new Date(item.createdAt) > sinceDate;
 
-    const isNew = new Date(item.createdAt) > new Date(opts.since);
-
-    if (isNew) {
-      if (!isSecurity) kept.push(item);
-      continue;
-    }
-
-    if (opts.filters.humanEngagementOnly && !hasHumanEngagement(item, opts.since)) {
+    if (!isNew && opts.filters.humanEngagementOnly && !hasHumanEngagement(item, opts.since)) {
       excludedSystem.push(item);
       continue;
     }
@@ -115,8 +114,15 @@ export function applyFilters(
       continue;
     }
 
-    if (!isSecurity) kept.push(item);
+    const isSecurity = hasSecurityKeyword(item, opts.securityKeywords);
+    if (isSecurity) security.push(item);
+
+    if (isNew) {
+      newItems.push(item);
+    } else if (!isSecurity) {
+      kept.push(item);
+    }
   }
 
-  return { items: kept, security, reReview, excludedAwaiting, excludedSystem };
+  return { newItems, items: kept, security, reReview, excludedAwaiting, excludedSystem };
 }

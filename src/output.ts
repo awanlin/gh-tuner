@@ -50,6 +50,11 @@ function formatDate(date: Date): string {
   return `${date.toISOString().slice(0, 10)} (${DAYS_OF_WEEK[date.getUTCDay()]})`;
 }
 
+function formatTimestamp(date: Date): string {
+  const iso = date.toISOString();
+  return `${iso.slice(0, 10)} ${iso.slice(11, 16)} UTC (${DAYS_OF_WEEK[date.getUTCDay()]})`;
+}
+
 function repoFromUrl(url: string): string {
   const match = url.match(/github\.com\/([^/]+\/[^/]+)\//);
   return match ? match[1] : 'unknown';
@@ -104,7 +109,7 @@ export function generateMarkdown(input: SummaryInput): string {
 
   lines.push(`# gh-tuner — ${modeLabel} Summary`);
   lines.push(`**Generated:** ${formatDate(input.generatedDate)}`);
-  lines.push(`**Delta since:** ${formatDate(input.sinceDate)}`);
+  lines.push(`**Delta since:** ${formatTimestamp(input.sinceDate)}`);
   lines.push(
     `**Repos scanned:** ${input.reposScanned} (${input.reposSkipped} skipped — biweekly/monthly not due)`,
   );

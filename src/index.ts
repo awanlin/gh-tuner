@@ -19,10 +19,11 @@ import {
 } from './github.js';
 import {
   applyFilters,
-  hasSecurityKeyword,
   hasChangesRequestedByOthers,
   isUnrepliedMention,
+  isAwaitingOthers,
 } from './filters.js';
+import { loadState, saveState, statePathFor, resolveSavedSince, selectSince } from './state.js';
 import {
   generateMarkdown,
   formatAge,
@@ -42,16 +43,16 @@ interface RunOpts {
   open: boolean;
   openAll?: boolean;
   showExcluded?: boolean;
+  saveState: boolean;
 }
 
 async function run(mode: Mode, opts: RunOpts): Promise<void> {
   const cfg = loadConfig(opts.config);
   const today = new Date();
+  const statePath = statePathFor(opts.config);
+  const savedSince = resolveSavedSince(loadState(statePath), mode);
 
-  let sinceDate: Date;
-  if (opts.since) {
-    sinceDate = new Date(opts.since);
-  } else {
+  const { since: sinceDate, source: sinceSource } = selectSince(opts.since, savedSince, () => {
     const entry = getScheduleForDay(cfg.schedule, today);
     if (!entry) {
       console.error(
@@ -61,12 +62,13 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
       );
       process.exit(1);
     }
-    sinceDate = resolveSince(entry.since, today);
-  }
+    return resolveSince(entry.since, today);
+  });
 
-  const sinceStr = sinceDate.toISOString().slice(0, 10);
+  const sinceIso = sinceDate.toISOString();
+  const sinceStr = sinceIso.slice(0, 10);
   console.log(chalk.blue(`gh-tuner — ${mode} mode`));
-  console.log(chalk.blue(`Since: ${sinceStr}`));
+  console.log(chalk.blue(`Since: ${sinceIso} (from ${sinceSource})`));
 
   const includedRepos: RepoConfig[] = [];
   let skipped = 0;
@@ -163,28 +165,21 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
       });
     }
 
+    // GitHub search is date-granular; drop items not touched since the exact timestamp.
+    items = items.filter((item) => new Date(item.updatedAt) > sinceDate);
+
     for (const item of items) {
       item.comments = fetchComments(repo.name, item.number);
     }
 
-    const newItems = items.filter((i) => new Date(i.createdAt) > sinceDate);
-    const updatedItems = items.filter((i) => new Date(i.createdAt) <= sinceDate);
-
-    for (const item of newItems) {
-      if (hasSecurityKeyword(item, cfg.securityKeywords)) {
-        allSecurity.push(item);
-      }
-    }
-
-    allNewItems.push(...newItems);
-
-    const filtered = applyFilters(updatedItems, {
-      since: sinceStr,
+    const filtered = applyFilters(items, {
+      since: sinceIso,
       user: cfg.user,
       filters: cfg.filters,
       securityKeywords: cfg.securityKeywords,
     });
 
+    allNewItems.push(...filtered.newItems);
     allUpdatedItems.push(...filtered.items);
     allSecurity.push(...filtered.security);
     allReReview.push(...filtered.reReview);
@@ -217,14 +212,20 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
       mentioned.push(...fetchMentionedPrs(repo.name, sinceStr, cfg.user));
     }
 
-    mentioned = mentioned.filter((i) => !seenUrls.has(i.url));
+    mentioned = mentioned.filter((i) => !seenUrls.has(i.url) && new Date(i.updatedAt) > sinceDate);
 
     for (const item of mentioned) {
       item.comments = fetchComments(repo.name, item.number);
     }
 
-    const pending = mentioned.filter((i) => isUnrepliedMention(i, cfg.user, sinceStr));
-    allMentioned.push(...pending);
+    for (const item of mentioned) {
+      if (!isUnrepliedMention(item, cfg.user, sinceIso)) continue;
+      if (cfg.filters.excludeAwaitingOthers && isAwaitingOthers(item, cfg.user)) {
+        allExcludedAwaiting.push(item);
+        continue;
+      }
+      allMentioned.push(item);
+    }
   }
 
   const areaStats = computeAreaStats(cfg, allNewItems, allUpdatedItems, allSecurity, today);
@@ -258,6 +259,14 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
     console.log(chalk.green(`Summary written to ${opts.output}`));
   } else {
     console.log(markdown);
+  }
+
+  if (!opts.saveState) {
+    console.log(chalk.gray('State not saved (--no-save-state)'));
+  } else if (failedRepos.length > 0) {
+    console.log(chalk.yellow('State not saved: some repos failed to fetch'));
+  } else {
+    saveState(statePath, mode, today);
   }
 
   if (opts.open) {
@@ -311,7 +320,8 @@ function computeAreaStats(
 function addCommonOptions(cmd: Command): Command {
   return cmd
     .option('--config <path>', 'Path to config file', './gh-tuner.yaml')
-    .option('--since <date>', 'Override delta window start (ISO date)')
+    .option('--since <date>', 'Override delta window start (ISO date or timestamp)')
+    .option('--no-save-state', 'Do not record this run as the start of the next delta')
     .option('--output <path>', 'Write markdown to file')
     .option('--no-open', 'Skip opening items in browser')
     .option('--open-all', 'Override the >50 item cap')
