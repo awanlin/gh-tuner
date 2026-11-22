@@ -1,10 +1,12 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import type { RepoStats } from './capacity/stats.js';
 
 export type StateMode = 'issues' | 'prs';
 
 export interface TunerState {
   lastRun?: Partial<Record<StateMode, string>>;
+  capacityStats?: Record<string, RepoStats>;
 }
 
 export const STATE_FILE_NAME = '.gh-tuner-state.json';
@@ -52,6 +54,12 @@ export function saveState(path: string, mode: StateMode | 'all', runAt: Date): v
     lastRun[m] = runAt.toISOString();
   }
   writeFileSync(path, JSON.stringify({ ...state, lastRun }, null, 2) + '\n');
+}
+
+export function saveCapacityStats(path: string, repo: string, stats: RepoStats): void {
+  const state = loadState(path);
+  const capacityStats = { ...state.capacityStats, [repo]: stats };
+  writeFileSync(path, JSON.stringify({ ...state, capacityStats }, null, 2) + '\n');
 }
 
 export type SinceSource = 'flag' | 'state' | 'schedule';

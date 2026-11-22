@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { formatAge, generateMarkdown } from '../src/output.js';
 import type { GitHubItem } from '../src/github.js';
 import type { SummaryInput } from '../src/output.js';
+import { renderCapacityLine, renderCapacitySections } from '../src/output.js';
+import type { CapacityReport } from '../src/capacity/report.js';
 
 describe('formatAge', () => {
   const now = new Date('2026-07-10T12:00:00Z');
@@ -468,5 +470,101 @@ describe('Delta since header', () => {
       failedRepos: [],
     });
     expect(md).toContain('**Delta since:** 2026-11-17 19:45 UTC (Tuesday)');
+  });
+});
+
+const rep = (over: Partial<CapacityReport> = {}): CapacityReport => ({
+  repo: 'backstage/backstage',
+  weekly: 9,
+  limit: 18,
+  activeCount: 16,
+  pickedUp7d: 7,
+  allowed: 2,
+  explain: 'x → 9/wk',
+  inProgress: [],
+  unassignedReviewed: [],
+  candidates: [],
+  moreCandidates: 0,
+  ...over,
+});
+
+describe('capacity output', () => {
+  it('capacity line shows remaining and FULL', () => {
+    expect(
+      renderCapacityLine([
+        rep(),
+        rep({
+          repo: 'backstage/community-plugins',
+          limit: 6,
+          activeCount: 6,
+          allowed: 0,
+        }),
+      ]),
+    ).toBe(
+      '**PR capacity** — backstage/backstage: 16/18 in progress, 2 left this week · backstage/community-plugins: 6/6 FULL',
+    );
+  });
+  it('sections render header, candidates and parked details', () => {
+    const md = renderCapacitySections(
+      rep({
+        inProgress: [
+          {
+            pr: {
+              number: 7,
+              title: 'Old',
+              url: 'u7',
+              labels: [],
+              createdAt: '2026-10-01T00:00:00Z',
+            } as never,
+            status: 'parked',
+            reason: 'author silent 21d',
+          },
+        ],
+        candidates: [
+          {
+            number: 8,
+            title: 'New',
+            url: 'u8',
+            labels: ['area:techdocs'],
+            createdAt: '2026-11-19T00:00:00Z',
+          } as never,
+        ],
+        moreCandidates: 3,
+      }),
+      new Date('2026-11-22T00:00:00Z'),
+    );
+    expect(md).toContain('## PR Capacity — backstage/backstage');
+    expect(md).toContain('**2 new allowed**');
+    expect(md).toContain('### New candidates — pick up to 2 (1)');
+    expect(md).toContain('_…and 3 more eligible_');
+    expect(md).toContain('<summary>Parked (1)</summary>');
+    expect(md).not.toContain('### Waiting on you');
+  });
+  it('issues summary includes capacity line', () => {
+    const md = generateMarkdown({
+      mode: 'issues',
+      generatedDate: new Date('2026-07-08'),
+      sinceDate: new Date('2026-07-03'),
+      reposScanned: 1,
+      reposSkipped: 0,
+      newItems: [],
+      updatedItems: [],
+      security: [],
+      reReview: [],
+      excludedAwaiting: [],
+      excludedSystem: [],
+      excludedAuthor: [],
+      excludedDrafts: [],
+      excludedChangesRequested: [],
+      excludedAssigned: [],
+      mentioned: [],
+      showExcluded: false,
+      areaStats: [],
+      failedRepos: [],
+      capacity: [rep()],
+      capacityFailed: ['o/r'],
+    });
+    expect(md).toContain('**PR capacity**');
+    expect(md).toContain('Capacity unavailable:** o/r');
   });
 });

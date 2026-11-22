@@ -32,7 +32,8 @@ import {
   type FailedRepo,
 } from './output.js';
 import { openItems } from './browser.js';
-import type { TunerConfig, RepoConfig } from './config.js';
+import { buildCapacityReport, type CapacityReport } from './capacity/report.js';
+import type { TunerConfig, RepoConfig, CapacityConfig } from './config.js';
 
 type Mode = 'issues' | 'prs' | 'all';
 
@@ -44,6 +45,7 @@ interface RunOpts {
   openAll?: boolean;
   showExcluded?: boolean;
   saveState: boolean;
+  refreshCapacity?: boolean;
 }
 
 async function run(mode: Mode, opts: RunOpts): Promise<void> {
@@ -106,7 +108,7 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
         failedRepos.push({ name: repo.name, mode: 'issues' });
       }
     }
-    if (mode === 'prs' || mode === 'all') {
+    if ((mode === 'prs' || mode === 'all') && !repo.capacity) {
       items.push(...fetchPrs(repo.name, sinceStr));
       if (lastExecFailed()) {
         failedRepos.push({ name: repo.name, mode: 'PRs' });
@@ -228,6 +230,28 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
     }
   }
 
+  const capacity: CapacityReport[] = [];
+  const capacityFailed: string[] = [];
+  for (const repo of includedRepos) {
+    if (!repo.capacity) continue;
+    console.log(chalk.gray(`  Capacity ${repo.name}...`));
+    try {
+      const r = buildCapacityReport({
+        repo: repo as RepoConfig & { capacity: CapacityConfig },
+        user: cfg.user,
+        now: today,
+        statePath,
+        refresh: opts.refreshCapacity ?? false,
+        withCandidates: mode !== 'issues',
+      });
+      if (r) capacity.push(r);
+      else capacityFailed.push(repo.name);
+    } catch (err) {
+      console.error(chalk.yellow(`  ⚠ capacity ${repo.name}: ${(err as Error).message}`));
+      capacityFailed.push(repo.name);
+    }
+  }
+
   const areaStats = computeAreaStats(cfg, allNewItems, allUpdatedItems, allSecurity, today);
 
   const summaryInput: SummaryInput = {
@@ -250,6 +274,8 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
     showExcluded: opts.showExcluded ?? false,
     areaStats,
     failedRepos,
+    capacity,
+    capacityFailed,
   };
 
   const markdown = generateMarkdown(summaryInput);
@@ -271,7 +297,16 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
 
   if (opts.open) {
     const allItems = [...allSecurity, ...allReReview, ...allNewItems, ...allUpdatedItems];
-    const unique = [...new Map(allItems.map((i) => [i.url, i])).values()];
+    const capacityItems: { url: string }[] =
+      mode === 'issues'
+        ? []
+        : capacity.flatMap((r) => [
+            ...r.inProgress
+              .filter((c) => c.status === 'waiting-on-you' || c.status === 'talking-not-moving')
+              .map((c) => c.pr),
+            ...r.candidates,
+          ]);
+    const unique = [...new Map([...allItems, ...capacityItems].map((i) => [i.url, i])).values()];
     await openItems(unique, { openAll: opts.openAll });
   }
 }
@@ -325,7 +360,8 @@ function addCommonOptions(cmd: Command): Command {
     .option('--output <path>', 'Write markdown to file')
     .option('--no-open', 'Skip opening items in browser')
     .option('--open-all', 'Override the >50 item cap')
-    .option('--show-excluded', 'List items removed by filters');
+    .option('--show-excluded', 'List items removed by filters')
+    .option('--refresh-capacity', 'Recompute cached capacity stats (incoming PRs, pace, pool)');
 }
 
 const program = new Command();

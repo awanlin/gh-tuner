@@ -6,6 +6,7 @@ import {
   statePathFor,
   loadState,
   saveState,
+  saveCapacityStats,
   resolveSavedSince,
   selectSince,
   STATE_FILE_NAME,
@@ -109,5 +110,28 @@ describe('selectSince', () => {
     const result = selectSince('2026-11-01', saved, () => fallbackDate);
     expect(result.source).toBe('flag');
     expect(result.since.toISOString()).toBe('2026-11-01T00:00:00.000Z');
+  });
+});
+
+describe('saveCapacityStats', () => {
+  const stats = {
+    computedAt: '2026-11-20T00:00:00.000Z',
+    configKey: 'k',
+    inflowPerWeek: 1,
+    pacePerWeek: 2,
+  };
+
+  it('writes stats per repo and keeps lastRun', () => {
+    saveState(path, 'prs', new Date('2026-11-17T00:00:00.000Z'));
+    saveCapacityStats(path, 'o/r', stats);
+    const state = loadState(path);
+    expect(state.capacityStats?.['o/r']).toEqual(stats);
+    expect(state.lastRun?.prs).toBe('2026-11-17T00:00:00.000Z');
+  });
+
+  it('saveState keeps existing capacityStats', () => {
+    saveCapacityStats(path, 'o/r', stats);
+    saveState(path, 'prs', new Date('2026-11-18T00:00:00.000Z'));
+    expect(loadState(path).capacityStats?.['o/r']).toEqual(stats);
   });
 });
