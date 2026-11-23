@@ -1,4 +1,6 @@
 import type { GitHubItem } from './github.js';
+import type { CapacityReport, ClassifiedPr } from './capacity/report.js';
+import type { CapacityPr } from './capacity/stale.js';
 
 export interface AreaStat {
   area: string;
@@ -32,6 +34,8 @@ export interface SummaryInput {
   showExcluded: boolean;
   areaStats: AreaStat[];
   failedRepos: FailedRepo[];
+  capacity?: CapacityReport[];
+  capacityFailed?: string[];
 }
 
 const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -101,6 +105,64 @@ function renderSection(title: string, items: GitHubItem[], now: Date): string {
   return lines.join('\n');
 }
 
+export function renderCapacityLine(reports: CapacityReport[]): string {
+  const parts = reports.map((r) =>
+    r.allowed === 0
+      ? `${r.repo}: ${r.activeCount}/${r.limit} FULL`
+      : `${r.repo}: ${r.activeCount}/${r.limit} in progress, ${r.allowed} left this week`,
+  );
+  return `**PR capacity** — ${parts.join(' · ')}`;
+}
+
+function capItem(pr: CapacityPr, note: string, now: Date, box = true): string {
+  const labels = pr.labels.length ? ` ${pr.labels.map((l) => `\`${l}\``).join(' ')}` : '';
+  return `- ${box ? '[ ] ' : ''}[#${pr.number}](${pr.url}) — ${pr.title}${labels} (${note || formatAge(pr.createdAt, now)})`;
+}
+
+export function renderCapacitySections(r: CapacityReport, now: Date): string {
+  const L: string[] = [
+    `## PR Capacity — ${r.repo}`,
+    `**${r.weekly}/wk · up to ${r.limit} in progress** · ${r.activeCount} active · ${r.pickedUp7d} picked up in last 7d · **${r.allowed} new allowed**`,
+    `<sub>${r.explain}</sub>`,
+    '',
+  ];
+  const group = (status: ClassifiedPr['status'], title: string) => {
+    const xs = r.inProgress.filter((c) => c.status === status);
+    if (!xs.length) return;
+    L.push(`### ${title} (${xs.length})`, ...xs.map((c) => capItem(c.pr, c.reason, now)), '');
+  };
+  group('waiting-on-you', 'Waiting on you');
+  group('approved', 'Approved — awaiting merge');
+  group('talking-not-moving', 'Talking but not moving');
+  group('waiting-on-author', 'Waiting on author');
+  if (r.unassignedReviewed.length) {
+    L.push(
+      `### Reviewed but not assigned (${r.unassignedReviewed.length}) — assign yourself or let go`,
+      ...r.unassignedReviewed.map((p) => capItem(p, '', now)),
+      '',
+    );
+  }
+  if (r.candidates.length) {
+    L.push(
+      `### New candidates — pick up to ${r.allowed} (${r.candidates.length})`,
+      ...r.candidates.map((p) => capItem(p, '', now)),
+    );
+    if (r.moreCandidates > 0) L.push(`_…and ${r.moreCandidates} more eligible_`);
+    L.push('');
+  }
+  const parked = r.inProgress.filter((c) => c.status === 'parked');
+  if (parked.length) {
+    L.push(
+      `<details><summary>Parked (${parked.length})</summary>`,
+      '',
+      ...parked.map((c) => capItem(c.pr, c.reason, now, false)),
+      '</details>',
+      '',
+    );
+  }
+  return L.join('\n');
+}
+
 export function generateMarkdown(input: SummaryInput): string {
   const modeLabel =
     input.mode === 'prs' ? 'PR Review' : input.mode === 'all' ? 'Full' : 'Issue Triage';
@@ -113,7 +175,18 @@ export function generateMarkdown(input: SummaryInput): string {
   lines.push(
     `**Repos scanned:** ${input.reposScanned} (${input.reposSkipped} skipped — biweekly/monthly not due)`,
   );
+  if (input.mode === 'issues' && input.capacity?.length) {
+    lines.push(renderCapacityLine(input.capacity));
+  }
+  if (input.capacityFailed?.length) {
+    lines.push(`> **⚠ Capacity unavailable:** ${input.capacityFailed.join(', ')}`);
+  }
   lines.push('');
+
+  if (input.mode !== 'issues') {
+    for (const r of input.capacity ?? [])
+      lines.push(renderCapacitySections(r, input.generatedDate));
+  }
 
   if (input.security.length > 0) {
     lines.push('## Security');

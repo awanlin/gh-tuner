@@ -196,3 +196,99 @@ describe('getScope', () => {
     expect(getScope(repo, 'prs')).toBe('filtered');
   });
 });
+
+function loadYaml(yaml: string) {
+  const dir = mkdtempSync(join(tmpdir(), 'tuner-'));
+  const p = join(dir, 'gh-tuner.yaml');
+  writeFileSync(p, yaml);
+  return loadConfig(p);
+}
+
+describe('capacity config', () => {
+  it('applies defaults to a minimal capacity block', () => {
+    const cfg = loadYaml(`
+user: me
+startDate: 2026-01-01
+schedule: {}
+filters: {}
+repos:
+  - name: backstage/backstage
+    scope: all
+    capacity:
+      model: fair-share
+      ownersSection: Core Maintainers
+`);
+    expect(cfg.repos[0].capacity).toEqual({
+      model: 'fair-share',
+      ownersSection: 'Core Maintainers',
+      stretch: 1.25,
+      paceMultiplier: 1.2,
+      inProgressMultiplier: 2,
+      staleDays: 14,
+      inflowWeeks: 12,
+      paceWeeks: 52,
+    });
+  });
+
+  it('requires codeownersTeam for the gap model', () => {
+    expect(() =>
+      loadYaml(`
+user: me
+startDate: 2026-01-01
+schedule: {}
+filters: {}
+repos:
+  - name: backstage/community-plugins
+    scope: all
+    capacity: { model: gap, ownersSection: Community Plugins }
+`),
+    ).toThrow(/codeownersTeam/);
+  });
+
+  it('rejects an unknown model', () => {
+    expect(() =>
+      loadYaml(`
+user: me
+startDate: 2026-01-01
+schedule: {}
+filters: {}
+repos:
+  - name: a/b
+    scope: all
+    capacity: { model: magic, ownersSection: X }
+`),
+    ).toThrow(/model/);
+  });
+
+  it('rejects non-numeric or non-positive tuning values', () => {
+    for (const v of ['"abc"', '0', '-1']) {
+      expect(() =>
+        loadYaml(`
+user: me
+startDate: 2026-01-01
+schedule: {}
+filters: {}
+repos:
+  - name: a/b
+    scope: all
+    capacity: { model: fair-share, ownersSection: X, stretch: ${v} }
+`),
+      ).toThrow(/stretch.*a\/b/);
+    }
+  });
+
+  it('rejects an empty codeownersTeam', () => {
+    expect(() =>
+      loadYaml(`
+user: me
+startDate: 2026-01-01
+schedule: {}
+filters: {}
+repos:
+  - name: a/b
+    scope: all
+    capacity: { model: gap, ownersSection: X, codeownersTeam: "" }
+`),
+    ).toThrow(/codeownersTeam/);
+  });
+});

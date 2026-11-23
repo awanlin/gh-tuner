@@ -1,4 +1,3 @@
-import type { GitHubItem } from './github.js';
 import chalk from 'chalk';
 
 export interface OpenResult {
@@ -18,7 +17,7 @@ function sleep(ms: number): Promise<void> {
 }
 
 export async function openItems(
-  items: GitHubItem[],
+  items: { url: string }[],
   opts: { openAll?: boolean; dryRun?: boolean } = {},
 ): Promise<OpenResult> {
   const total = items.length;

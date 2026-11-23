@@ -8,11 +8,26 @@ export interface RepoConfig {
   scope: ScopeValue | { issues: ScopeValue; prs: ScopeValue };
   cadence?: 'weekly' | 'biweekly' | 'monthly';
   labels?: string[];
+  capacity?: CapacityConfig;
 }
 
 export function getScope(repo: RepoConfig, mode: 'issues' | 'prs'): ScopeValue {
   if (typeof repo.scope === 'string') return repo.scope;
   return repo.scope[mode];
+}
+
+export interface CapacityConfig {
+  model: 'fair-share' | 'gap';
+  /** Heading in backstage/backstage OWNERS.md, e.g. "Core Maintainers" or "Community Plugins". */
+  ownersSection: string;
+  stretch: number;
+  paceMultiplier: number;
+  inProgressMultiplier: number;
+  staleDays: number;
+  inflowWeeks: number;
+  paceWeeks: number;
+  /** Required for model "gap": the team that alone marks a workspace as ownerless. */
+  codeownersTeam?: string;
 }
 
 export interface ScheduleEntry {
@@ -66,6 +81,48 @@ function validateScope(
   );
 }
 
+function validateCapacity(raw: unknown, repoName: string): CapacityConfig {
+  if (typeof raw !== 'object' || raw === null) {
+    throw new Error(`Invalid capacity for repo ${repoName}: must be an object`);
+  }
+  const c = raw as Record<string, unknown>;
+  if (c.model !== 'fair-share' && c.model !== 'gap') {
+    throw new Error(`Invalid capacity model for repo ${repoName}: must be "fair-share" or "gap"`);
+  }
+  if (typeof c.ownersSection !== 'string' || !c.ownersSection) {
+    throw new Error(`Capacity for repo ${repoName} requires ownersSection`);
+  }
+  if (
+    c.codeownersTeam !== undefined &&
+    (typeof c.codeownersTeam !== 'string' || !c.codeownersTeam.trim())
+  ) {
+    throw new Error(`Invalid capacity codeownersTeam for repo ${repoName}: must be non-empty`);
+  }
+  if (c.model === 'gap' && typeof c.codeownersTeam !== 'string') {
+    throw new Error(`Capacity model "gap" for repo ${repoName} requires codeownersTeam`);
+  }
+  const num = (k: string, d: number) => {
+    if (c[k] === undefined) return d;
+    const v = c[k];
+    if (typeof v !== 'number' || !Number.isFinite(v) || v <= 0) {
+      throw new Error(`Invalid capacity ${k} for repo ${repoName}: must be a number > 0`);
+    }
+    return v;
+  };
+  const out: CapacityConfig = {
+    model: c.model,
+    ownersSection: c.ownersSection,
+    stretch: num('stretch', 1.25),
+    paceMultiplier: num('paceMultiplier', 1.2),
+    inProgressMultiplier: num('inProgressMultiplier', 2),
+    staleDays: num('staleDays', 14),
+    inflowWeeks: num('inflowWeeks', 12),
+    paceWeeks: num('paceWeeks', 52),
+  };
+  if (typeof c.codeownersTeam === 'string') out.codeownersTeam = c.codeownersTeam;
+  return out;
+}
+
 export function loadConfig(configPath: string): TunerConfig {
   const raw = readFileSync(configPath, 'utf-8');
   const parsed = parse(raw);
@@ -89,12 +146,21 @@ export function loadConfig(configPath: string): TunerConfig {
   return {
     user: parsed.user,
     startDate: parsed.startDate,
-    repos: parsed.repos.map((r: Partial<RepoConfig> & { name: string; scope: unknown }) => {
-      const repo: RepoConfig = { name: r.name, scope: validateScope(r.scope, r.name) };
-      if (r.cadence) repo.cadence = r.cadence;
-      if (r.labels) repo.labels = r.labels;
-      return repo;
-    }),
+    repos: parsed.repos.map(
+      (
+        r: Omit<Partial<RepoConfig>, 'capacity'> & {
+          name: string;
+          scope: unknown;
+          capacity?: unknown;
+        },
+      ) => {
+        const repo: RepoConfig = { name: r.name, scope: validateScope(r.scope, r.name) };
+        if (r.cadence) repo.cadence = r.cadence;
+        if (r.labels) repo.labels = r.labels;
+        if (r.capacity) repo.capacity = validateCapacity(r.capacity, r.name);
+        return repo;
+      },
+    ),
     schedule: parsed.schedule,
     securityKeywords: parsed.securityKeywords ?? [],
     filters: {

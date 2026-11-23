@@ -28,6 +28,10 @@ repos:
       - area:home
       - area:documentation
       - area:microsite
+    capacity:
+      model: fair-share
+      ownersSection: Core Maintainers
+      inProgressMultiplier: 2
   - name: backstage/community-plugins
     scope:
       issues: all
@@ -38,6 +42,11 @@ repos:
       - workspace/catalog
       - workspace/cost-insights
       - owner/area-maintainers
+    capacity:
+      model: gap
+      ownersSection: Community Plugins
+      codeownersTeam: '@backstage/community-plugins-maintainers'
+      inProgressMultiplier: 1.5
 
 schedule:
   tuesday:
