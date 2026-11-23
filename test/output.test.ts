@@ -534,7 +534,6 @@ const rep = (over: Partial<CapacityReport> = {}): CapacityReport => ({
   inProgress: [],
   unassignedReviewed: [],
   candidates: [],
-  moreCandidates: 0,
   ...over,
 });
 
@@ -579,14 +578,13 @@ describe('capacity output', () => {
             createdAt: '2026-11-19T00:00:00Z',
           } as never,
         ],
-        moreCandidates: 3,
       }),
       new Date('2026-11-22T00:00:00Z'),
     );
     expect(md).toContain('## PR Capacity — backstage/backstage');
     expect(md).toContain('**2 new allowed**');
     expect(md).toContain('### New candidates — pick up to 2 (1)');
-    expect(md).toContain('_…and 3 more eligible_');
+    expect(md).not.toContain('more eligible');
     expect(md).toContain('<summary>Parked (1)</summary>');
     expect(md).not.toContain('### Waiting on you');
   });
