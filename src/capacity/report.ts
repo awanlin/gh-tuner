@@ -23,7 +23,6 @@ export interface CapacityReport {
   inProgress: ClassifiedPr[];
   unassignedReviewed: CapacityPr[];
   candidates: CapacityPr[];
-  moreCandidates: number;
 }
 
 export function rankCandidates(prs: CapacityPr[], labels: string[]): CapacityPr[] {
@@ -111,7 +110,6 @@ export function buildCapacityReport(args: {
   const allowed = intakeAllowed({ weekly, pickedUp7d, limit, activeCount });
 
   let candidates: CapacityPr[] = [];
-  let moreCandidates = 0;
   if (withCandidates) {
     const open = searchCapacityPrs(`repo:${R} is:pr is:open draft:false no:assignee ${BOT_QUERY}`);
     if (!open) return null;
@@ -124,7 +122,6 @@ export function buildCapacityReport(args: {
     );
     const ranked = rankCandidates(eligible, repo.labels ?? []);
     candidates = ranked.slice(0, allowed + 5);
-    moreCandidates = ranked.length - candidates.length;
   }
 
   return {
@@ -138,6 +135,5 @@ export function buildCapacityReport(args: {
     inProgress,
     unassignedReviewed,
     candidates,
-    moreCandidates,
   };
 }

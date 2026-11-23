@@ -148,7 +148,6 @@ export function renderCapacitySections(r: CapacityReport, now: Date): string {
       `### New candidates — pick up to ${r.allowed} (${r.candidates.length})`,
       ...r.candidates.map((p) => capItem(p, '', now)),
     );
-    if (r.moreCandidates > 0) L.push(`_…and ${r.moreCandidates} more eligible_`);
     L.push('');
   }
   const parked = r.inProgress.filter((c) => c.status === 'parked');
