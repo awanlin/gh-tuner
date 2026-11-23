@@ -124,7 +124,7 @@ export function renderCapacitySections(r: CapacityReport, now: Date): string {
   const L: string[] = [
     `## PR Capacity — ${r.repo}`,
     `**${r.weekly}/wk · up to ${r.limit} in progress** · ${r.activeCount} active · ${r.pickedUp7d} picked up in last 7d · **${r.allowed} new allowed**`,
-    `<sub>${r.explain}</sub>`,
+    `_${r.explain}_`,
     '',
   ];
   const group = (status: ClassifiedPr['status'], title: string) => {
@@ -153,10 +153,8 @@ export function renderCapacitySections(r: CapacityReport, now: Date): string {
   const parked = r.inProgress.filter((c) => c.status === 'parked');
   if (parked.length) {
     L.push(
-      `<details><summary>Parked (${parked.length})</summary>`,
-      '',
+      `### Parked (${parked.length})`,
       ...parked.map((c) => capItem(c.pr, c.reason, now, false)),
-      '</details>',
       '',
     );
   }
@@ -226,13 +224,12 @@ export function generateMarkdown(input: SummaryInput): string {
 
   if (input.pinged.length > 0) {
     lines.push(
-      `<details><summary>Pinged — not involved (${input.pinged.length})</summary>`,
+      `## Pinged — not involved (${input.pinged.length})`,
       '',
       ...input.pinged.map((i) => {
         const labels = i.labels.length ? ` ${i.labels.map((l) => `\`${l}\``).join(' ')}` : '';
         return `- [#${i.number}](${i.url}) — ${i.title}${labels} (${formatAge(i.createdAt, input.generatedDate)})`;
       }),
-      '</details>',
       '',
     );
   }
