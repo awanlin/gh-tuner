@@ -31,6 +31,7 @@ export interface SummaryInput {
   excludedChangesRequested: GitHubItem[];
   excludedAssigned: GitHubItem[];
   mentioned: GitHubItem[];
+  pinged: GitHubItem[];
   showExcluded: boolean;
   areaStats: AreaStat[];
   failedRepos: FailedRepo[];
@@ -224,6 +225,19 @@ export function generateMarkdown(input: SummaryInput): string {
   );
   if (mentionedSection) lines.push(mentionedSection);
 
+  if (input.pinged.length > 0) {
+    lines.push(
+      `<details><summary>Pinged — not involved (${input.pinged.length})</summary>`,
+      '',
+      ...input.pinged.map((i) => {
+        const labels = i.labels.length ? ` ${i.labels.map((l) => `\`${l}\``).join(' ')}` : '';
+        return `- [#${i.number}](${i.url}) — ${i.title}${labels} (${formatAge(i.createdAt, input.generatedDate)})`;
+      }),
+      '</details>',
+      '',
+    );
+  }
+
   lines.push('---');
   const footerParts = [
     `${input.excludedAwaiting.length} ${itemLabel} excluded (awaiting others)`,
@@ -240,6 +254,9 @@ export function generateMarkdown(input: SummaryInput): string {
   }
   if (input.excludedAssigned.length > 0) {
     footerParts.push(`${input.excludedAssigned.length} already assigned`);
+  }
+  if (input.pinged.length > 0) {
+    footerParts.push(`${input.pinged.length} pings (not involved)`);
   }
   lines.push(`*${footerParts.join(' · ')}*`);
 

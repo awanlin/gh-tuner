@@ -60,6 +60,62 @@ export function isUnrepliedMention(item: GitHubItem, user: string, since: string
   );
 }
 
+/**
+ * True when the user has a stake in the item: author, assignee, reviewer, or
+ * has commented on it at any time.
+ */
+export function isInvolved(item: GitHubItem, user: string): boolean {
+  return (
+    item.author === user ||
+    item.assignees.includes(user) ||
+    item.reviews.some((r) => r.author === user) ||
+    item.comments.some((c) => c.author === user)
+  );
+}
+
+export interface MentionResult {
+  mentioned: GitHubItem[];
+  pinged: GitHubItem[];
+  excludedAwaiting: GitHubItem[];
+  excludedAssigned: GitHubItem[];
+}
+
+/**
+ * Sorts @-mention search hits. Items assigned to someone else are dropped when
+ * `excludeAssigned` is on. With `mentionsRequireInvolvement`, mentions on items
+ * the user is not involved in go to `pinged` (FYI) instead of `mentioned`.
+ */
+export function classifyMentions(
+  items: GitHubItem[],
+  opts: { since: string; user: string; filters: FilterConfig },
+): MentionResult {
+  const result: MentionResult = {
+    mentioned: [],
+    pinged: [],
+    excludedAwaiting: [],
+    excludedAssigned: [],
+  };
+
+  for (const item of items) {
+    if (opts.filters.excludeAssigned && item.assignees.some((a) => a !== opts.user)) {
+      result.excludedAssigned.push(item);
+      continue;
+    }
+    if (!isUnrepliedMention(item, opts.user, opts.since)) continue;
+    if (opts.filters.excludeAwaitingOthers && isAwaitingOthers(item, opts.user)) {
+      result.excludedAwaiting.push(item);
+      continue;
+    }
+    if (opts.filters.mentionsRequireInvolvement && !isInvolved(item, opts.user)) {
+      result.pinged.push(item);
+    } else {
+      result.mentioned.push(item);
+    }
+  }
+
+  return result;
+}
+
 export function hasSecurityKeyword(item: GitHubItem, keywords: string[]): boolean {
   const text = `${item.title} ${item.comments.map((c) => c.body).join(' ')}`.toLowerCase();
   return keywords.some((kw) => text.includes(kw.toLowerCase()));

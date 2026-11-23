@@ -76,6 +76,7 @@ describe('generateMarkdown', () => {
       excludedChangesRequested: [],
       excludedAssigned: [],
       mentioned: [],
+      pinged: [],
       showExcluded: false,
       areaStats: [{ area: 'area:search', openIssues: 5, openPrs: 2, oldest: '31d' }],
       failedRepos: [],
@@ -110,6 +111,7 @@ describe('generateMarkdown', () => {
       excludedChangesRequested: [],
       excludedAssigned: [],
       mentioned: [],
+      pinged: [],
       showExcluded: false,
       areaStats: [],
       failedRepos: [],
@@ -148,6 +150,7 @@ describe('generateMarkdown', () => {
       excludedChangesRequested: [],
       excludedAssigned: [],
       mentioned: [],
+      pinged: [],
       showExcluded: false,
       areaStats: [],
       failedRepos: [],
@@ -177,6 +180,7 @@ describe('generateMarkdown', () => {
       excludedChangesRequested: [],
       excludedAssigned: [],
       mentioned: [],
+      pinged: [],
       showExcluded: false,
       areaStats: [],
       failedRepos: [
@@ -209,6 +213,7 @@ describe('generateMarkdown', () => {
       excludedChangesRequested: [],
       excludedAssigned: [],
       mentioned: [],
+      pinged: [],
       showExcluded: false,
       areaStats: [],
       failedRepos: [],
@@ -236,6 +241,7 @@ describe('generateMarkdown', () => {
       excludedChangesRequested: [],
       excludedAssigned: [],
       mentioned: [],
+      pinged: [],
       showExcluded: false,
       areaStats: [],
       failedRepos: [],
@@ -263,6 +269,7 @@ describe('generateMarkdown', () => {
       excludedChangesRequested: [],
       excludedAssigned: [],
       mentioned: [],
+      pinged: [],
       showExcluded: false,
       areaStats: [],
       failedRepos: [],
@@ -299,6 +306,7 @@ describe('generateMarkdown', () => {
       excludedChangesRequested: [],
       excludedAssigned: [],
       mentioned: [mentionedItem],
+      pinged: [],
       showExcluded: false,
       areaStats: [],
       failedRepos: [],
@@ -308,6 +316,41 @@ describe('generateMarkdown', () => {
     expect(md).toContain('## Mentioned — Awaiting Reply (1)');
     expect(md).toContain('#99');
     expect(md).toContain('Need your input on search');
+  });
+
+  it('renders pinged mentions as a collapsed list with a footer count', () => {
+    const pinged = makeItem({
+      number: 77,
+      title: 'Cold ping',
+      url: 'https://github.com/backstage/backstage/pull/77',
+    });
+    const input: SummaryInput = {
+      mode: 'prs',
+      generatedDate: new Date('2026-07-11'),
+      sinceDate: new Date('2026-07-04'),
+      reposScanned: 1,
+      reposSkipped: 0,
+      newItems: [],
+      updatedItems: [],
+      security: [],
+      reReview: [],
+      excludedAwaiting: [],
+      excludedSystem: [],
+      excludedAuthor: [],
+      excludedDrafts: [],
+      excludedChangesRequested: [],
+      excludedAssigned: [],
+      mentioned: [],
+      pinged: [pinged],
+      showExcluded: false,
+      areaStats: [],
+      failedRepos: [],
+    };
+    const md = generateMarkdown(input);
+    expect(md).toContain('<details><summary>Pinged — not involved (1)</summary>');
+    expect(md).toContain('- [#77](https://github.com/backstage/backstage/pull/77) — Cold ping');
+    expect(md).not.toContain('- [ ] [#77]');
+    expect(md).toContain('1 pings (not involved)');
   });
 
   it('omits mentioned section when empty', () => {
@@ -328,6 +371,7 @@ describe('generateMarkdown', () => {
       excludedChangesRequested: [],
       excludedAssigned: [],
       mentioned: [],
+      pinged: [],
       showExcluded: false,
       areaStats: [],
       failedRepos: [],
@@ -335,6 +379,8 @@ describe('generateMarkdown', () => {
 
     const md = generateMarkdown(input);
     expect(md).not.toContain('Mentioned');
+    expect(md).not.toContain('Pinged');
+    expect(md).not.toContain('pings (not involved)');
   });
 
   it('omits failed repos warning when none failed', () => {
@@ -355,6 +401,7 @@ describe('generateMarkdown', () => {
       excludedChangesRequested: [],
       excludedAssigned: [],
       mentioned: [],
+      pinged: [],
       showExcluded: false,
       areaStats: [],
       failedRepos: [],
@@ -401,6 +448,7 @@ describe('generateMarkdown', () => {
       excludedChangesRequested: [],
       excludedAssigned: [],
       mentioned: [],
+      pinged: [],
       showExcluded: true,
       areaStats: [],
       failedRepos: [],
@@ -436,6 +484,7 @@ describe('generateMarkdown', () => {
       excludedChangesRequested: [],
       excludedAssigned: [],
       mentioned: [],
+      pinged: [],
       showExcluded: false,
       areaStats: [],
       failedRepos: [],
@@ -465,6 +514,7 @@ describe('Delta since header', () => {
       excludedChangesRequested: [],
       excludedAssigned: [],
       mentioned: [],
+      pinged: [],
       showExcluded: false,
       areaStats: [],
       failedRepos: [],
@@ -558,6 +608,7 @@ describe('capacity output', () => {
       excludedChangesRequested: [],
       excludedAssigned: [],
       mentioned: [],
+      pinged: [],
       showExcluded: false,
       areaStats: [],
       failedRepos: [],

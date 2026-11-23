@@ -8,6 +8,8 @@ import {
   isUnrepliedMention,
   hasSecurityKeyword,
   applyFilters,
+  isInvolved,
+  classifyMentions,
 } from '../src/filters.js';
 import type { GitHubItem } from '../src/github.js';
 
@@ -533,5 +535,126 @@ describe('applyFilters', () => {
       expect(result.newItems.map((i) => i.number)).toEqual([7]);
       expect(result.items.map((i) => i.number)).toEqual([6]);
     });
+  });
+});
+
+describe('isInvolved', () => {
+  const ping = { author: 'other', createdAt: '2026-07-04T00:00:00Z', body: '@me please look' };
+
+  it('is true when the user is the author', () => {
+    expect(isInvolved(makeItem({ author: 'me' }), 'me')).toBe(true);
+  });
+
+  it('is true when the user is an assignee', () => {
+    expect(isInvolved(makeItem({ assignees: ['me'] }), 'me')).toBe(true);
+  });
+
+  it('is true when the user has reviewed', () => {
+    const item = makeItem({
+      reviews: [{ author: 'me', state: 'COMMENTED', commitOid: 'abc' }],
+    });
+    expect(isInvolved(item, 'me')).toBe(true);
+  });
+
+  it('is true when the user has commented at any time', () => {
+    const item = makeItem({
+      comments: [{ author: 'me', createdAt: '2025-01-01T00:00:00Z', body: 'old note' }, ping],
+    });
+    expect(isInvolved(item, 'me')).toBe(true);
+  });
+
+  it('is false when only others comment and mention the user', () => {
+    expect(isInvolved(makeItem({ comments: [ping] }), 'me')).toBe(false);
+  });
+});
+
+describe('classifyMentions', () => {
+  const since = '2026-07-01T00:00:00Z';
+  const ping = { author: 'other', createdAt: '2026-07-04T00:00:00Z', body: '@me please look' };
+  const filters = {
+    humanEngagementOnly: true,
+    excludeAwaitingOthers: true,
+    excludeAuthor: true,
+    excludeDrafts: true,
+    excludeChangesRequestedByOthers: true,
+    excludeAssigned: true,
+    mentionsRequireInvolvement: true,
+  };
+
+  it('excludes items assigned to another user when excludeAssigned is on', () => {
+    const item = makeItem({ assignees: ['someone'], comments: [ping] });
+    const r = classifyMentions([item], { since, user: 'me', filters });
+    expect(r.excludedAssigned).toEqual([item]);
+    expect(r.mentioned).toEqual([]);
+    expect(r.pinged).toEqual([]);
+  });
+
+  it('keeps items assigned to someone else when excludeAssigned is off', () => {
+    const item = makeItem({ assignees: ['someone'], comments: [ping] });
+    const r = classifyMentions([item], {
+      since,
+      user: 'me',
+      filters: { ...filters, excludeAssigned: false, mentionsRequireInvolvement: false },
+    });
+    expect(r.mentioned).toEqual([item]);
+  });
+
+  it('keeps items assigned to the user', () => {
+    const item = makeItem({ assignees: ['me'], comments: [ping] });
+    const r = classifyMentions([item], { since, user: 'me', filters });
+    expect(r.mentioned).toEqual([item]);
+  });
+
+  it('sends not-involved mentions to pinged when the flag is on', () => {
+    const item = makeItem({ comments: [ping] });
+    const r = classifyMentions([item], { since, user: 'me', filters });
+    expect(r.pinged).toEqual([item]);
+    expect(r.mentioned).toEqual([]);
+  });
+
+  it('sends not-involved mentions to mentioned when the flag is off', () => {
+    const item = makeItem({ comments: [ping] });
+    const r = classifyMentions([item], {
+      since,
+      user: 'me',
+      filters: { ...filters, mentionsRequireInvolvement: false },
+    });
+    expect(r.mentioned).toEqual([item]);
+    expect(r.pinged).toEqual([]);
+  });
+
+  it('always sends involved mentions to mentioned', () => {
+    const item = makeItem({
+      isPr: true,
+      reviews: [{ author: 'me', state: 'APPROVED', commitOid: 'abc' }],
+      comments: [ping],
+    });
+    const r = classifyMentions([item], { since, user: 'me', filters });
+    expect(r.mentioned).toEqual([item]);
+  });
+
+  it('drops mentions the user already replied to', () => {
+    const item = makeItem({
+      comments: [ping, { author: 'me', createdAt: '2026-07-05T00:00:00Z', body: 'done' }],
+    });
+    const r = classifyMentions([item], {
+      since,
+      user: 'me',
+      filters: { ...filters, excludeAwaitingOthers: false },
+    });
+    expect(r.mentioned).toEqual([]);
+    expect(r.pinged).toEqual([]);
+  });
+
+  it('routes awaiting-others mentions to excludedAwaiting', () => {
+    const item = makeItem({
+      comments: [
+        { ...ping, createdAt: '2026-06-20T00:00:00Z' },
+        { author: 'me', createdAt: '2026-06-25T00:00:00Z', body: 'over to you @other' },
+      ],
+    });
+    const r = classifyMentions([item], { since, user: 'me', filters });
+    expect(r.excludedAwaiting).toEqual([item]);
+    expect(r.mentioned).toEqual([]);
   });
 });
