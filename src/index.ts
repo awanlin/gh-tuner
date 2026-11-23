@@ -17,12 +17,7 @@ import {
   lastExecFailed,
   type GitHubItem,
 } from './github.js';
-import {
-  applyFilters,
-  hasChangesRequestedByOthers,
-  isUnrepliedMention,
-  isAwaitingOthers,
-} from './filters.js';
+import { applyFilters, hasChangesRequestedByOthers, classifyMentions } from './filters.js';
 import { loadState, saveState, statePathFor, resolveSavedSince, selectSince } from './state.js';
 import {
   generateMarkdown,
@@ -190,6 +185,7 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
   }
 
   const allMentioned: GitHubItem[] = [];
+  const allPinged: GitHubItem[] = [];
   const seenUrls = new Set(
     [
       ...allNewItems,
@@ -220,14 +216,15 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
       item.comments = fetchComments(repo.name, item.number);
     }
 
-    for (const item of mentioned) {
-      if (!isUnrepliedMention(item, cfg.user, sinceIso)) continue;
-      if (cfg.filters.excludeAwaitingOthers && isAwaitingOthers(item, cfg.user)) {
-        allExcludedAwaiting.push(item);
-        continue;
-      }
-      allMentioned.push(item);
-    }
+    const m = classifyMentions(mentioned, {
+      since: sinceIso,
+      user: cfg.user,
+      filters: cfg.filters,
+    });
+    allMentioned.push(...m.mentioned);
+    allPinged.push(...m.pinged);
+    allExcludedAwaiting.push(...m.excludedAwaiting);
+    allExcludedAssigned.push(...m.excludedAssigned);
   }
 
   const capacity: CapacityReport[] = [];
@@ -271,6 +268,7 @@ async function run(mode: Mode, opts: RunOpts): Promise<void> {
     excludedChangesRequested: allExcludedChangesRequested,
     excludedAssigned: allExcludedAssigned,
     mentioned: allMentioned,
+    pinged: allPinged,
     showExcluded: opts.showExcluded ?? false,
     areaStats,
     failedRepos,

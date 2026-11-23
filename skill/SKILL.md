@@ -37,11 +37,12 @@ If the user passed `--no-open`, do not open any browser tabs.
    > **Priority:** 3 items need immediate attention — [brief description of the top items by severity/urgency].
 
 3. When the output contains review capacity content:
-   - In PR mode, base the priority summary on **Waiting on you** and **Talking but not moving** first, then the new candidates. Never suggest picking more candidates than the "pick up to N" number.
+   - In PR mode, base the priority summary on capacity first (**Waiting on you**, **Talking but not moving**, then the new candidates), and only then **Mentioned — Awaiting Reply**. Never suggest picking more candidates than the "pick up to N" number.
    - In issue mode, if a `**PR capacity**` line says `FULL` for a repo, don't suggest taking on a PR from triage for that repo. Suggest leaving it for others or adding it to the next PR session.
    - Remind the user to **assign themselves** to any PR they pick up, since that is what counts it as in progress.
    - If a repo is listed as unable to compute capacity, say so rather than guessing numbers. `--refresh-capacity` forces a recompute of the cached stats.
-4. Save the enhanced output to `workspace/gh-tuner/YYYY-MM-DD-{mode}.md` where `{mode}` is `issues`, `prs`, or `all`.
+4. Items in the **Pinged — not involved** list are FYI only. Never include them in the priority summary.
+5. Save the enhanced output to `workspace/gh-tuner/YYYY-MM-DD-{mode}.md` where `{mode}` is `issues`, `prs`, or `all`.
 
 ## Present to the user
 

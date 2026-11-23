@@ -84,6 +84,7 @@ filters:
     expect(config.filters.excludeDrafts).toBe(true);
     expect(config.filters.excludeChangesRequestedByOthers).toBe(true);
     expect(config.filters.excludeAssigned).toBe(false);
+    expect(config.filters.mentionsRequireInvolvement).toBe(false);
   });
 
   it('respects excludeAuthor when explicitly set to false', () => {
@@ -104,6 +105,24 @@ filters:
 `);
     const config = loadConfig(path);
     expect(config.filters.excludeAuthor).toBe(false);
+  });
+
+  it('respects mentionsRequireInvolvement when explicitly set to true', () => {
+    const path = writeTempConfig(`
+user: testuser
+startDate: 2026-07-07
+repos:
+  - name: org/repo1
+    scope: all
+schedule:
+  tuesday:
+    mode: issues
+    since: last-thursday
+filters:
+  mentionsRequireInvolvement: true
+`);
+    const config = loadConfig(path);
+    expect(config.filters.mentionsRequireInvolvement).toBe(true);
   });
 
   it('throws on missing required field', () => {

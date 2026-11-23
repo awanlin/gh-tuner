@@ -42,6 +42,7 @@ export interface FilterConfig {
   excludeDrafts: boolean;
   excludeChangesRequestedByOthers: boolean;
   excludeAssigned: boolean;
+  mentionsRequireInvolvement: boolean;
 }
 
 export interface TunerConfig {
@@ -170,6 +171,7 @@ export function loadConfig(configPath: string): TunerConfig {
       excludeDrafts: parsed.filters.excludeDrafts ?? true,
       excludeChangesRequestedByOthers: parsed.filters.excludeChangesRequestedByOthers ?? true,
       excludeAssigned: parsed.filters.excludeAssigned ?? false,
+      mentionsRequireInvolvement: parsed.filters.mentionsRequireInvolvement ?? false,
     },
   };
 }

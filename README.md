@@ -127,8 +127,22 @@ filters:
   excludeAuthor: true # skip items you authored
   excludeDrafts: true # skip draft PRs
   excludeChangesRequestedByOthers: true # skip PRs where another reviewer already requested changes
-  excludeAssigned: true # skip items that already have an assignee
+  excludeAssigned: true # skip items that already have an assignee (also applies to mentions)
+  mentionsRequireInvolvement: true # only list mentions on items you're involved in
 ```
+
+### Mentions
+
+Items where you were @-mentioned and haven't replied are listed under **Mentioned — Awaiting Reply**. `excludeAssigned` applies here too, so mentions on items assigned to someone else are dropped.
+
+With `mentionsRequireInvolvement: true` (default `false`), only mentions on items you're involved in are listed there. You're involved if any of these is true:
+
+- You're an assignee.
+- You've reviewed it (any state).
+- You've commented on it at any time.
+- You're the author.
+
+Other mentions go in a collapsed **Pinged — not involved** list after the Mentioned section. They're counted in the footer and are never opened with `--open`.
 
 ## Review capacity
 
