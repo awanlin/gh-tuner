@@ -318,7 +318,7 @@ describe('generateMarkdown', () => {
     expect(md).toContain('Need your input on search');
   });
 
-  it('renders pinged mentions as a collapsed list with a footer count', () => {
+  it('renders pinged mentions as a section with a footer count', () => {
     const pinged = makeItem({
       number: 77,
       title: 'Cold ping',
@@ -347,7 +347,7 @@ describe('generateMarkdown', () => {
       failedRepos: [],
     };
     const md = generateMarkdown(input);
-    expect(md).toContain('<details><summary>Pinged — not involved (1)</summary>');
+    expect(md).toContain('## Pinged — not involved (1)');
     expect(md).toContain('- [#77](https://github.com/backstage/backstage/pull/77) — Cold ping');
     expect(md).not.toContain('- [ ] [#77]');
     expect(md).toContain('1 pings (not involved)');
@@ -538,6 +538,47 @@ const rep = (over: Partial<CapacityReport> = {}): CapacityReport => ({
 });
 
 describe('capacity output', () => {
+  it('emits plain markdown with no HTML tags', () => {
+    const pr = {
+      number: 7,
+      title: 'Old',
+      url: 'https://github.com/backstage/backstage/pull/7',
+      labels: [],
+      createdAt: '2026-10-01T00:00:00Z',
+    };
+    const md = generateMarkdown({
+      mode: 'prs',
+      generatedDate: new Date('2026-11-22T00:00:00Z'),
+      sinceDate: new Date('2026-11-17T00:00:00Z'),
+      reposScanned: 1,
+      reposSkipped: 0,
+      newItems: [],
+      updatedItems: [],
+      security: [],
+      reReview: [],
+      excludedAwaiting: [],
+      excludedSystem: [],
+      excludedAuthor: [],
+      excludedDrafts: [],
+      excludedChangesRequested: [],
+      excludedAssigned: [],
+      mentioned: [],
+      pinged: [{ ...pr, number: 9, url: 'https://github.com/backstage/backstage/pull/9' } as never],
+      showExcluded: false,
+      areaStats: [],
+      failedRepos: [],
+      capacity: [
+        rep({
+          inProgress: [{ pr: pr as never, status: 'parked', reason: 'author silent 21d' }],
+          candidates: [pr as never],
+        }),
+      ],
+    });
+    expect(md).toContain('### Parked (1)');
+    expect(md).toContain('## Pinged — not involved (1)');
+    expect(md).not.toMatch(/<\/?(sub|details|summary)\b/);
+  });
+
   it('capacity line shows remaining and FULL', () => {
     expect(
       renderCapacityLine([
@@ -553,7 +594,7 @@ describe('capacity output', () => {
       '**PR capacity** — backstage/backstage: 16/18 in progress, 2 left this week · backstage/community-plugins: 6/6 FULL',
     );
   });
-  it('sections render header, candidates and parked details', () => {
+  it('sections render header, candidates and parked list', () => {
     const md = renderCapacitySections(
       rep({
         inProgress: [
@@ -585,7 +626,8 @@ describe('capacity output', () => {
     expect(md).toContain('**2 new allowed**');
     expect(md).toContain('### New candidates — pick up to 2 (1)');
     expect(md).not.toContain('more eligible');
-    expect(md).toContain('<summary>Parked (1)</summary>');
+    expect(md).toContain('### Parked (1)');
+    expect(md).toContain('_x → 9/wk_');
     expect(md).not.toContain('### Waiting on you');
   });
   it('issues summary includes capacity line', () => {

@@ -142,7 +142,7 @@ With `mentionsRequireInvolvement: true` (default `false`), only mentions on item
 - You've commented on it at any time.
 - You're the author.
 
-Other mentions go in a collapsed **Pinged — not involved** list after the Mentioned section. They're counted in the footer and are never opened with `--open`.
+Other mentions go in a **Pinged — not involved** section after the Mentioned section. They're counted in the footer and are never opened with `--open`.
 
 ## Review capacity
 
