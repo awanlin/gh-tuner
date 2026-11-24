@@ -89,6 +89,43 @@ describe('buildCapacityReport', () => {
     expect(r.unassignedReviewed.map((p) => p.number)).toEqual([3]);
     expect(r.candidates.map((p) => p.number)).toEqual([5, 6]); // maintainer + bot removed, label first
   });
+  it('excludes PRs the user already reviewed from candidates', () => {
+    vi.mocked(searchCapacityPrs)
+      .mockReset()
+      .mockReturnValueOnce([]) // in progress
+      .mockReturnValueOnce([]) // last 7d
+      .mockReturnValueOnce([pr(3)]) // reviewed, unassigned
+      .mockReturnValueOnce([pr(3), pr(4)]); // candidates
+    const r = buildCapacityReport({
+      repo,
+      user: 'me',
+      now: NOW,
+      statePath: join(mkdtempSync(join(tmpdir(), 't-')), 's.json'),
+      refresh: true,
+      withCandidates: true,
+    })!;
+    expect(r.unassignedReviewed.map((p) => p.number)).toEqual([3]);
+    expect(r.candidates.map((p) => p.number)).toEqual([4]);
+  });
+  it('candidate search excludes PRs reviewed by the user', () => {
+    vi.mocked(searchCapacityPrs)
+      .mockReset()
+      .mockReturnValueOnce([])
+      .mockReturnValueOnce([])
+      .mockReturnValueOnce([])
+      .mockReturnValueOnce([]);
+    buildCapacityReport({
+      repo,
+      user: 'me',
+      now: NOW,
+      statePath: join(mkdtempSync(join(tmpdir(), 't-')), 's.json'),
+      refresh: true,
+      withCandidates: true,
+    });
+    const queries = vi.mocked(searchCapacityPrs).mock.calls.map((c) => c[0]);
+    const candidateQuery = queries.find((q) => q.includes('no:assignee'));
+    expect(candidateQuery).toContain('-reviewed-by:me');
+  });
   it('returns null when in-progress fetch fails', () => {
     vi.mocked(searchCapacityPrs).mockReturnValue(null);
     expect(
