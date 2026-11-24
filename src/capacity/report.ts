@@ -111,10 +111,15 @@ export function buildCapacityReport(args: {
 
   let candidates: CapacityPr[] = [];
   if (withCandidates) {
-    const open = searchCapacityPrs(`repo:${R} is:pr is:open draft:false no:assignee ${BOT_QUERY}`);
+    const open = searchCapacityPrs(
+      `repo:${R} is:pr is:open draft:false no:assignee -reviewed-by:${user} ${BOT_QUERY}`,
+    );
     if (!open) return null;
+    // Already-reviewed PRs belong only in "Reviewed but not assigned".
+    const reviewed = new Set(unassignedReviewed.map((p) => p.number));
     const eligible = open.filter(
       (p) =>
+        !reviewed.has(p.number) &&
         !p.authorIsBot &&
         !mset.has(p.author.toLowerCase()) &&
         p.author.toLowerCase() !== me &&

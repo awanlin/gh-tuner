@@ -150,6 +150,8 @@ For repos with a `capacity` block, gh-tuner replaces the delta "New/Updated PRs"
 
 For these repos, `labels` rank PR candidates instead of filtering them. Matching PRs come first, then the oldest.
 
+Candidates exclude PRs you've already reviewed. Those appear only under "Reviewed but not assigned", where you decide whether to assign yourself or let them go.
+
 ### Config keys
 
 ```yaml
